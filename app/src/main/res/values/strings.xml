@@ -18,6 +18,18 @@
     <string name="btn_flash_on">闪光·开</string>
     <string name="btn_gallery">相册</string>
     <string name="btn_cancel">取消连拍</string>
+    <string name="btn_ev_0">EV 0</string>
+    <string name="btn_ev_p1">EV +1</string>
+    <string name="btn_ev_n1">EV −1</string>
+    <string name="btn_ev_p2">EV +2</string>
+    <string name="btn_ev_n2">EV −2</string>
+    <string name="btn_ev_off">EV 不可用</string>
+    <string name="btn_timer_off">延时·关</string>
+    <string name="btn_timer_3">延时 3s</string>
+    <string name="btn_timer_5">延时 5s</string>
+    <string name="btn_timer_10">延时 10s</string>
+    <string name="lock_focus">已锁定对焦与曝光（支持长按预览触发）</string>
+    <string name="timer_countdown">%1$d 秒后拍摄…</string>
 
     <!-- 取景辅助 -->
     <string name="level_flat">水平</string>

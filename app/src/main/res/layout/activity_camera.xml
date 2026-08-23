@@ -57,6 +57,18 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/btn_gallery" />
+
+        <Button
+            android:id="@+id/btnEv"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/btn_ev_0" />
+
+        <Button
+            android:id="@+id/btnTimer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/btn_timer_off" />
     </LinearLayout>
 
     <!-- 顶部手动对焦按钮 -->

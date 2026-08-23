@@ -24,8 +24,10 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.camera.core.Camera;
+import androidx.camera.core.CameraInfo;
 import androidx.camera.core.CameraInfoUnavailableException;
 import androidx.camera.core.CameraSelector;
+import androidx.camera.core.ExposureState;
 import androidx.camera.core.FocusMeteringAction;
 import androidx.camera.core.FocusMeteringResult;
 import androidx.camera.core.ImageCapture;
@@ -61,6 +63,7 @@ public class CameraActivity extends Activity implements LifecycleOwner, SensorEv
     private PreviewView previewView;
     private AidOverlayView aidOverlay;
     private Button btnFocus, btnCapture, btnSuper, btnSettings, btnSwitchCamera, btnFlash, btnGallery, btnCancel;
+    private Button btnEv, btnTimer;
     private TextView tvStatus;
     private View focusBox;
 
@@ -94,6 +97,16 @@ public class CameraActivity extends Activity implements LifecycleOwner, SensorEv
     /** 连拍取消标记 */
     private boolean cancelRequested = false;
 
+    /** 曝光补偿档位序列（索引循环） */
+    private static final int[] EV_VALUES = {0, 1, -1, 2, -2};
+    private int evIdx = 0;
+    /** 定时自拍延时（秒），0 = 关闭 */
+    private int timerDelaySec = 0;
+    private static final int[] TIMER_VALUES = {0, 3, 5, 10};
+    private int timerIdx = 0;
+    /** 倒计时任务序号，避免多次计时交错 */
+    private int timerSeq = 0;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -111,6 +124,8 @@ public class CameraActivity extends Activity implements LifecycleOwner, SensorEv
         btnFlash = findViewById(R.id.btnFlash);
         btnGallery = findViewById(R.id.btnGallery);
         btnCancel = findViewById(R.id.btnCancel);
+        btnEv = findViewById(R.id.btnEv);
+        btnTimer = findViewById(R.id.btnTimer);
         tvStatus = findViewById(R.id.tvStatus);
         focusBox = findViewById(R.id.focusBox);
 
@@ -136,14 +151,16 @@ public class CameraActivity extends Activity implements LifecycleOwner, SensorEv
         });
 
         btnFocus.setOnClickListener(v -> autoFocusCenter());
-        btnCapture.setOnClickListener(v -> captureSingle());
-        btnSuper.setOnClickListener(v -> captureSuperResolution());
+        btnCapture.setOnClickListener(v -> requestCapture(this::captureSingle));
+        btnSuper.setOnClickListener(v -> requestCapture(this::captureSuperResolution));
         btnSettings.setOnClickListener(v -> startActivity(new Intent(this, SettingsActivity.class)));
         btnSwitchCamera.setOnClickListener(v -> switchCamera());
         btnFlash.setOnClickListener(v -> cycleFlash());
         btnGallery.setOnClickListener(v -> startActivity(new Intent(this, GalleryActivity.class)));
         btnCancel.setOnClickListener(v -> cancelSuper());
         btnCancel.setVisibility(View.GONE);
+        btnEv.setOnClickListener(v -> cycleEv());
+        btnTimer.setOnClickListener(v -> cycleTimer());
 
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
@@ -201,6 +218,7 @@ public class CameraActivity extends Activity implements LifecycleOwner, SensorEv
 
                 provider.unbindAll();
                 camera = provider.bindToLifecycle(this, selector, preview, imageCapture);
+                applyEv();
             } catch (ExecutionException | InterruptedException | CameraInfoUnavailableException e) {
                 e.printStackTrace();
             }
@@ -236,6 +254,93 @@ public class CameraActivity extends Activity implements LifecycleOwner, SensorEv
         btnFlash.setText(s);
     }
 
+    // ---------- 曝光补偿 EV ----------
+
+    private void cycleEv() {
+        if (camera == null) return;
+        ExposureState es = camera.getCameraInfo().getExposureState();
+        if (!es.isExposureCompensationSupported()) {
+            Toast.makeText(this, R.string.btn_ev_off, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        evIdx = (evIdx + 1) % EV_VALUES.length;
+        applyEv();
+    }
+
+    private void applyEv() {
+        if (camera == null) return;
+        ExposureState es = camera.getCameraInfo().getExposureState();
+        if (!es.isExposureCompensationSupported()) {
+            btnEv.setText(R.string.btn_ev_off);
+            return;
+        }
+        int v = EV_VALUES[evIdx];
+        int lo = es.getExposureCompensationRange().getLower();
+        int hi = es.getExposureCompensationRange().getUpper();
+        int idx = Math.max(lo, Math.min(hi, v));
+        camera.getCameraControl().setExposureCompensationIndex(idx);
+        btnEv.setText(evLabel(idx));
+    }
+
+    private String evLabel(int v) {
+        switch (v) {
+            case 1: return getString(R.string.btn_ev_p1);
+            case -1: return getString(R.string.btn_ev_n1);
+            case 2: return getString(R.string.btn_ev_p2);
+            case -2: return getString(R.string.btn_ev_n2);
+            default: return getString(R.string.btn_ev_0);
+        }
+    }
+
+    // ---------- 定时拍摄 ----------
+
+    private void cycleTimer() {
+        timerIdx = (timerIdx + 1) % TIMER_VALUES.length;
+        timerDelaySec = TIMER_VALUES[timerIdx];
+        timerSeq++; // 使正在进行的倒计时立即失效
+        btnTimer.setText(timerLabel());
+        if (timerDelaySec > 0) {
+            Toast.makeText(this, timerLabel(), Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private String timerLabel() {
+        switch (timerDelaySec) {
+            case 3: return getString(R.string.btn_timer_3);
+            case 5: return getString(R.string.btn_timer_5);
+            case 10: return getString(R.string.btn_timer_10);
+            default: return getString(R.string.btn_timer_off);
+        }
+    }
+
+    /** 定时拍摄入口：延时>0 时先倒计时，再执行拍摄动作。 */
+    private void requestCapture(Runnable shoot) {
+        if (capturing) return;
+        if (timerDelaySec <= 0) { shoot.run(); return; }
+        final int seq = ++timerSeq;
+        btnCapture.setEnabled(false);
+        btnSuper.setEnabled(false);
+        countdown(seq, timerDelaySec, shoot);
+    }
+
+    private void countdown(int seq, int remain, Runnable shoot) {
+        if (seq != timerSeq) { // 被新指令或取消覆盖
+            btnCapture.setEnabled(true);
+            btnSuper.setEnabled(true);
+            setStatus("");
+            return;
+        }
+        if (remain <= 0) {
+            btnCapture.setEnabled(true);
+            btnSuper.setEnabled(true);
+            setStatus("");
+            if (seq == timerSeq) shoot.run();
+            return;
+        }
+        setStatus(getString(R.string.timer_countdown, remain));
+        mainHandler.postDelayed(() -> countdown(seq, remain - 1, shoot), 1000);
+    }
+
     // ---------- 数字变焦 ----------
 
     private void initZoomGestures() {
@@ -268,6 +373,19 @@ public class CameraActivity extends Activity implements LifecycleOwner, SensorEv
             public boolean onDoubleTap(MotionEvent e) {
                 resetZoom();
                 return true;
+            }
+
+            @Override
+            public void onLongPress(MotionEvent e) {
+                // 长按锁定对焦与曝光：对触点触发 AF+AE 测光，自动取消时长延长至 30s
+                if (camera == null) return;
+                MeteringPoint point = previewView.getMeteringPointFactory().createPoint(e.getX(), e.getY());
+                FocusMeteringAction action = new FocusMeteringAction.Builder(point,
+                        FocusMeteringAction.FLAG_AF | FocusMeteringAction.FLAG_AE)
+                        .setAutoCancelDuration(30, TimeUnit.SECONDS).build();
+                camera.getCameraControl().startFocusAndMetering(action);
+                showFocusBox(e.getX(), e.getY());
+                Toast.makeText(CameraActivity.this, R.string.lock_focus, Toast.LENGTH_SHORT).show();
             }
         });
     }
