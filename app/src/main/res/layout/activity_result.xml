@@ -3,15 +3,15 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="@color/black">
+    android:background="@color/bg_deep">
 
     <TextView
         android:id="@+id/tvTitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="10dp"
         android:gravity="center"
-        android:textColor="@color/white"
+        android:padding="@dimen/spacing_m"
+        android:textColor="@color/text_primary"
         android:textSize="16sp"
         android:textStyle="bold" />
 
@@ -27,51 +27,77 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:paddingStart="12dp"
-        android:paddingEnd="12dp">
+        android:paddingStart="@dimen/spacing_l"
+        android:paddingEnd="@dimen/spacing_l"
+        android:paddingBottom="@dimen/spacing_s">
 
         <Button
             android:id="@+id/btnCompare"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="48dp"
             android:layout_weight="1"
-            android:text="@string/btn_compare" />
+            android:layout_marginEnd="@dimen/spacing_s"
+            android:background="@drawable/bg_capsule"
+            android:paddingLeft="2dp"
+            android:paddingRight="2dp"
+            android:text="@string/btn_compare"
+            android:textColor="@color/text_primary"
+            android:textSize="14sp" />
 
         <Button
             android:id="@+id/btnViewSuper"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="48dp"
             android:layout_weight="1"
-            android:text="@string/btn_view_super" />
+            android:layout_marginEnd="@dimen/spacing_s"
+            android:background="@drawable/bg_capsule"
+            android:paddingLeft="2dp"
+            android:paddingRight="2dp"
+            android:text="@string/btn_view_super"
+            android:textColor="@color/text_primary"
+            android:textSize="14sp" />
 
         <Button
             android:id="@+id/btnViewOrig"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="48dp"
             android:layout_weight="1"
-            android:text="@string/btn_view_orig" />
+            android:background="@drawable/bg_capsule"
+            android:paddingLeft="2dp"
+            android:paddingRight="2dp"
+            android:text="@string/btn_view_orig"
+            android:textColor="@color/text_primary"
+            android:textSize="14sp" />
     </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:padding="12dp">
+        android:paddingStart="@dimen/spacing_l"
+        android:paddingEnd="@dimen/spacing_l"
+        android:paddingBottom="@dimen/spacing_m">
 
         <Button
             android:id="@+id/btnSave"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="48dp"
             android:layout_weight="1"
-            android:backgroundTint="@color/accent"
-            android:text="@string/btn_save" />
+            android:layout_marginEnd="@dimen/spacing_s"
+            android:background="@drawable/bg_icon_button_selected"
+            android:text="@string/btn_save"
+            android:textColor="@color/text_on_accent"
+            android:textSize="14sp" />
 
         <Button
             android:id="@+id/btnBack"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="48dp"
             android:layout_weight="1"
-            android:text="@string/btn_back" />
+            android:background="@drawable/bg_capsule"
+            android:text="@string/btn_back"
+            android:textColor="@color/text_primary"
+            android:textSize="14sp" />
     </LinearLayout>
 
     <TextView
@@ -79,9 +105,9 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center"
-        android:paddingBottom="6dp"
+        android:paddingBottom="@dimen/spacing_s"
         android:text="@string/hint_compare"
-        android:textColor="#B3FFFFFF"
+        android:textColor="@color/text_secondary"
         android:textSize="12sp"
         android:visibility="gone" />
 </LinearLayout>

@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">对焦超分相机</string>
+    <string name="app_name">全能相机</string>
     <string name="permission_rationale">需要相机权限才能进行拍摄、对焦与多帧合成。</string>
     <string name="btn_capture">拍照</string>
     <string name="btn_super">超分 x2</string>
@@ -67,4 +67,15 @@
     <string name="btn_view_super">超分</string>
     <string name="btn_view_orig">原图</string>
     <string name="hint_compare">左右拖动分隔线对比，双指放大</string>
+
+    <!-- 相机新设计 -->
+    <string name="mode_photo">拍照</string>
+    <string name="mode_super">超分</string>
+    <string name="btn_recent">最近</string>
+    <string name="lbl_grid_style">网格样式</string>
+    <string name="grid_off">关</string>
+    <string name="grid_thirds">九宫格</string>
+    <string name="grid_golden">黄金分割</string>
+    <string name="toast_saved">已保存到相册</string>
+    <string name="hint_pinch">双指缩放·双击复位</string>
 </resources>

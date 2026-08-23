@@ -40,6 +40,8 @@ public class SettingsActivity extends Activity {
                 Math.round(Prefs.sharpen(this) * 10) / 10.0f, v -> Prefs.putSharpen(this, v));
         setupSpinner(R.id.spQuality, R.array.quality_entries, R.array.quality_values,
                 Prefs.quality(this), v -> Prefs.putQuality(this, v.intValue()));
+        setupSpinner(R.id.spGrid, R.array.grid_entries, R.array.grid_values,
+                Prefs.gridStyle(this), v -> Prefs.putGridStyle(this, v.intValue()));
 
         Button btnCheckUpdate = findViewById(R.id.btnCheckUpdate);
         btnCheckUpdate.setOnClickListener(v -> checkUpdate());

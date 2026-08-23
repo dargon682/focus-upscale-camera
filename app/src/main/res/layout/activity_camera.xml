@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/black">
+    android:background="@color/bg_deep">
 
+    <!-- 预览画面 -->
     <androidx.camera.view.PreviewView
         android:id="@+id/previewView"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
-    <!-- 取景辅助覆盖层：九宫格 + 水平仪（不拦截触摸） -->
+    <!-- 取景辅助覆盖层：构图网格 + 水平仪（不拦截触摸） -->
     <com.photo.tool.AidOverlayView
         android:id="@+id/aidOverlay"
         android:layout_width="match_parent"
@@ -26,109 +26,221 @@
         android:visibility="invisible"
         android:background="@drawable/bg_focus_box" />
 
-    <!-- 顶部工具栏：设置、切换前后摄、闪光灯 -->
+    <!-- 顶部工具栏：EV / 延时 / 闪光 / 前后摄 / 设置 / 相册 -->
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="top|end"
-        android:layout_margin="12dp"
+        android:layout_margin="@dimen/spacing_m"
+        android:padding="@dimen/toolbar_padding"
         android:orientation="horizontal">
 
         <Button
-            android:id="@+id/btnFlash"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/btn_flash_off" />
-
-        <Button
-            android:id="@+id/btnSwitchCamera"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/btn_switch_camera" />
-
-        <Button
-            android:id="@+id/btnSettings"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/btn_settings" />
-
-        <Button
-            android:id="@+id/btnGallery"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/btn_gallery" />
-
-        <Button
             android:id="@+id/btnEv"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/btn_ev_0" />
+            android:layout_width="@dimen/icon_btn_size"
+            android:layout_height="@dimen/icon_btn_size"
+            android:layout_margin="@dimen/spacing_xs"
+            android:minWidth="0dp"
+            android:minHeight="0dp"
+            android:stateListAnimator="@null"
+            android:background="@drawable/bg_icon_button"
+            android:text="@string/btn_ev_0"
+            android:textColor="@color/text_primary"
+            android:textSize="12sp" />
 
         <Button
             android:id="@+id/btnTimer"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/btn_timer_off" />
+            android:layout_width="@dimen/icon_btn_size"
+            android:layout_height="@dimen/icon_btn_size"
+            android:layout_margin="@dimen/spacing_xs"
+            android:minWidth="0dp"
+            android:minHeight="0dp"
+            android:stateListAnimator="@null"
+            android:background="@drawable/bg_icon_button"
+            android:text="@string/btn_timer_off"
+            android:textColor="@color/text_primary"
+            android:textSize="12sp" />
+
+        <Button
+            android:id="@+id/btnFlash"
+            android:layout_width="@dimen/icon_btn_size"
+            android:layout_height="@dimen/icon_btn_size"
+            android:layout_margin="@dimen/spacing_xs"
+            android:minWidth="0dp"
+            android:minHeight="0dp"
+            android:stateListAnimator="@null"
+            android:background="@drawable/bg_icon_button"
+            android:text="@string/btn_flash_off"
+            android:textColor="@color/text_primary"
+            android:textSize="12sp" />
+
+        <Button
+            android:id="@+id/btnSwitchCamera"
+            android:layout_width="@dimen/icon_btn_size"
+            android:layout_height="@dimen/icon_btn_size"
+            android:layout_margin="@dimen/spacing_xs"
+            android:minWidth="0dp"
+            android:minHeight="0dp"
+            android:stateListAnimator="@null"
+            android:background="@drawable/bg_icon_button"
+            android:text="@string/btn_switch_camera"
+            android:textColor="@color/text_primary"
+            android:textSize="12sp" />
+
+        <Button
+            android:id="@+id/btnSettings"
+            android:layout_width="@dimen/icon_btn_size"
+            android:layout_height="@dimen/icon_btn_size"
+            android:layout_margin="@dimen/spacing_xs"
+            android:minWidth="0dp"
+            android:minHeight="0dp"
+            android:stateListAnimator="@null"
+            android:background="@drawable/bg_icon_button"
+            android:text="@string/btn_settings"
+            android:textColor="@color/text_primary"
+            android:textSize="12sp" />
+
+        <Button
+            android:id="@+id/btnGallery"
+            android:layout_width="@dimen/icon_btn_size"
+            android:layout_height="@dimen/icon_btn_size"
+            android:layout_margin="@dimen/spacing_xs"
+            android:minWidth="0dp"
+            android:minHeight="0dp"
+            android:stateListAnimator="@null"
+            android:background="@drawable/bg_icon_button"
+            android:text="@string/btn_gallery"
+            android:textColor="@color/text_primary"
+            android:textSize="12sp" />
     </LinearLayout>
 
-    <!-- 顶部手动对焦按钮 -->
-    <Button
-        android:id="@+id/btnFocus"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="top|start"
-        android:layout_margin="12dp"
-        android:text="@string/btn_focus" />
-
-    <!-- 状态提示 -->
+    <!-- 状态 / 倒计时文本：居中，半透明深底圆角 -->
     <TextView
         android:id="@+id/tvStatus"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="top|center_horizontal"
-        android:layout_marginTop="12dp"
-        android:padding="6dp"
+        android:layout_gravity="center"
+        android:paddingLeft="@dimen/spacing_l"
+        android:paddingRight="@dimen/spacing_l"
+        android:paddingTop="@dimen/spacing_s"
+        android:paddingBottom="@dimen/spacing_s"
+        android:background="@drawable/bg_capsule"
+        android:text="@string/status_super"
+        android:textColor="@color/text_primary"
         android:textSize="14sp"
-        android:textColor="@color/white"
-        android:background="#80000000" />
+        android:visibility="invisible" />
 
-    <!-- 底部控制区 -->
+    <!-- 底部控制栏 -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
         android:orientation="vertical"
-        android:background="#99000000"
-        android:padding="16dp">
+        android:background="@color/control_bar_bg"
+        android:padding="@dimen/spacing_l">
 
-        <Button
-            android:id="@+id/btnCapture"
+        <!-- 模式切换行 -->
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:backgroundTint="@color/accent"
-            android:text="@string/btn_capture" />
+            android:orientation="horizontal"
+            android:gravity="center_horizontal">
 
-        <Button
-            android:id="@+id/btnSuper"
+            <Button
+                android:id="@+id/btnModePhoto"
+                android:layout_width="wrap_content"
+                android:layout_height="@dimen/icon_btn_size"
+                android:layout_marginEnd="@dimen/spacing_s"
+                android:minWidth="0dp"
+                android:minHeight="0dp"
+                android:stateListAnimator="@null"
+                android:background="@drawable/bg_capsule"
+                android:text="@string/mode_photo"
+                android:textColor="@color/text_primary"
+                android:textSize="15sp" />
+
+            <Button
+                android:id="@+id/btnModeSuper"
+                android:layout_width="wrap_content"
+                android:layout_height="@dimen/icon_btn_size"
+                android:layout_marginStart="@dimen/spacing_s"
+                android:minWidth="0dp"
+                android:minHeight="0dp"
+                android:stateListAnimator="@null"
+                android:background="@drawable/bg_capsule"
+                android:text="@string/mode_super"
+                android:textColor="@color/text_secondary"
+                android:textSize="15sp" />
+        </LinearLayout>
+
+        <!-- 快门行：大圆形快门 -->
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/btn_super" />
+            android:layout_marginTop="@dimen/spacing_l"
+            android:orientation="horizontal"
+            android:gravity="center_horizontal">
 
+            <FrameLayout
+                android:id="@+id/btnShutter"
+                android:layout_width="@dimen/shutter_size"
+                android:layout_height="@dimen/shutter_size"
+                android:clickable="true"
+                android:focusable="true">
+
+                <ImageView
+                    android:id="@+id/imgShutter"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_margin="10dp"
+                    android:src="@drawable/bg_shutter"
+                    android:contentDescription="@string/btn_capture" />
+            </FrameLayout>
+        </LinearLayout>
+
+        <!-- 取消连拍按钮（连拍时可见） -->
         <Button
             android:id="@+id/btnCancel"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_s"
+            android:minHeight="0dp"
+            android:stateListAnimator="@null"
+            android:background="@null"
             android:visibility="gone"
-            android:text="@string/btn_cancel" />
+            android:text="@string/btn_cancel"
+            android:textColor="@color/danger"
+            android:textSize="15sp" />
 
+        <!-- 手势提示 -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
-            android:paddingTop="4dp"
-            android:text="@string/hint_tap_focus"
-            android:textColor="#B3FFFFFF"
+            android:layout_marginTop="@dimen/spacing_s"
+            android:text="@string/hint_pinch"
+            android:textColor="@color/text_secondary"
             android:textSize="12sp" />
     </LinearLayout>
+
+    <!-- 左下角最近缩略角标 -->
+    <FrameLayout
+        android:id="@+id/imgRecent"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_gravity="bottom|start"
+        android:layout_margin="@dimen/spacing_l"
+        android:clickable="true"
+        android:focusable="true"
+        android:background="@drawable/bg_card"
+        android:visibility="gone">
+
+        <ImageView
+            android:id="@+id/imgRecentThumb"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop"
+            android:contentDescription="@string/btn_recent" />
+    </FrameLayout>
 
 </FrameLayout>

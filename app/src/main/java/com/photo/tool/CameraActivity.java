@@ -5,8 +5,10 @@ import android.app.Activity;
 import android.app.ActivityManager;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.os.Build;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -14,11 +16,14 @@ import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.provider.MediaStore;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
 import android.widget.Button;
+import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -62,10 +67,16 @@ public class CameraActivity extends Activity implements LifecycleOwner, SensorEv
 
     private PreviewView previewView;
     private AidOverlayView aidOverlay;
-    private Button btnFocus, btnCapture, btnSuper, btnSettings, btnSwitchCamera, btnFlash, btnGallery, btnCancel;
-    private Button btnEv, btnTimer;
+    private Button btnEv, btnTimer, btnFlash, btnSwitchCamera, btnSettings, btnGallery, btnCancel;
+    private Button btnModePhoto, btnModeSuper;
+    private FrameLayout btnShutter;
+    private FrameLayout imgRecent;
+    private ImageView imgRecentThumb;
     private TextView tvStatus;
     private View focusBox;
+
+    /** 拍摄模式 0 拍照 / 1 超分 */
+    private int mode = 0;
 
     private ImageCapture imageCapture;
     private Camera camera;
@@ -116,18 +127,21 @@ public class CameraActivity extends Activity implements LifecycleOwner, SensorEv
 
         previewView = findViewById(R.id.previewView);
         aidOverlay = findViewById(R.id.aidOverlay);
-        btnFocus = findViewById(R.id.btnFocus);
-        btnCapture = findViewById(R.id.btnCapture);
-        btnSuper = findViewById(R.id.btnSuper);
-        btnSettings = findViewById(R.id.btnSettings);
-        btnSwitchCamera = findViewById(R.id.btnSwitchCamera);
-        btnFlash = findViewById(R.id.btnFlash);
-        btnGallery = findViewById(R.id.btnGallery);
-        btnCancel = findViewById(R.id.btnCancel);
         btnEv = findViewById(R.id.btnEv);
         btnTimer = findViewById(R.id.btnTimer);
+        btnFlash = findViewById(R.id.btnFlash);
+        btnSwitchCamera = findViewById(R.id.btnSwitchCamera);
+        btnSettings = findViewById(R.id.btnSettings);
+        btnGallery = findViewById(R.id.btnGallery);
+        btnModePhoto = findViewById(R.id.btnModePhoto);
+        btnModeSuper = findViewById(R.id.btnModeSuper);
+        btnShutter = findViewById(R.id.btnShutter);
+        btnCancel = findViewById(R.id.btnCancel);
+        imgRecent = findViewById(R.id.imgRecent);
+        imgRecentThumb = findViewById(R.id.imgRecentThumb);
         tvStatus = findViewById(R.id.tvStatus);
         focusBox = findViewById(R.id.focusBox);
+        applyModeButtons();
 
         // 取景辅助开关（从设置读取）
         aidOverlay.enable(Prefs.gridEnabled(this), Prefs.levelEnabled(this));
@@ -150,13 +164,14 @@ public class CameraActivity extends Activity implements LifecycleOwner, SensorEv
             return true;
         });
 
-        btnFocus.setOnClickListener(v -> autoFocusCenter());
-        btnCapture.setOnClickListener(v -> requestCapture(this::captureSingle));
-        btnSuper.setOnClickListener(v -> requestCapture(this::captureSuperResolution));
+        btnShutter.setOnClickListener(v -> onShutterClick());
+        btnModePhoto.setOnClickListener(v -> switchMode(0));
+        btnModeSuper.setOnClickListener(v -> switchMode(1));
         btnSettings.setOnClickListener(v -> startActivity(new Intent(this, SettingsActivity.class)));
         btnSwitchCamera.setOnClickListener(v -> switchCamera());
         btnFlash.setOnClickListener(v -> cycleFlash());
         btnGallery.setOnClickListener(v -> startActivity(new Intent(this, GalleryActivity.class)));
+        imgRecent.setOnClickListener(v -> startActivity(new Intent(this, GalleryActivity.class)));
         btnCancel.setOnClickListener(v -> cancelSuper());
         btnCancel.setVisibility(View.GONE);
         btnEv.setOnClickListener(v -> cycleEv());
@@ -169,6 +184,38 @@ public class CameraActivity extends Activity implements LifecycleOwner, SensorEv
             requestPermissions(new String[]{Manifest.permission.CAMERA}, REQ_CAMERA);
         } else {
             startCamera();
+        }
+    }
+
+    /** 快门点击：依据当前模式分派单张拍照或超分合成。 */
+    private void onShutterClick() {
+        if (mode == 1) {
+            requestCapture(this::captureSuperResolution);
+        } else {
+            requestCapture(this::captureSingle);
+        }
+    }
+
+    /** 切换拍摄模式（0 拍照 / 1 超分）并刷新选中态。 */
+    private void switchMode(int m) {
+        if (m == mode) return;
+        mode = m;
+        applyModeButtons();
+        // 使取景辅助（若有网格样式依赖）重新绘制
+        aidOverlay.invalidate();
+    }
+
+    private void applyModeButtons() {
+        if (mode == 1) {
+            btnModeSuper.setBackgroundResource(R.drawable.bg_icon_button_selected);
+            btnModeSuper.setTextColor(ContextCompat.getColor(this, R.color.text_on_accent));
+            btnModePhoto.setBackgroundResource(R.drawable.bg_capsule);
+            btnModePhoto.setTextColor(ContextCompat.getColor(this, R.color.text_secondary));
+        } else {
+            btnModePhoto.setBackgroundResource(R.drawable.bg_icon_button_selected);
+            btnModePhoto.setTextColor(ContextCompat.getColor(this, R.color.text_on_accent));
+            btnModeSuper.setBackgroundResource(R.drawable.bg_capsule);
+            btnModeSuper.setTextColor(ContextCompat.getColor(this, R.color.text_secondary));
         }
     }
 
@@ -318,21 +365,18 @@ public class CameraActivity extends Activity implements LifecycleOwner, SensorEv
         if (capturing) return;
         if (timerDelaySec <= 0) { shoot.run(); return; }
         final int seq = ++timerSeq;
-        btnCapture.setEnabled(false);
-        btnSuper.setEnabled(false);
+        btnShutter.setEnabled(false);
         countdown(seq, timerDelaySec, shoot);
     }
 
     private void countdown(int seq, int remain, Runnable shoot) {
         if (seq != timerSeq) { // 被新指令或取消覆盖
-            btnCapture.setEnabled(true);
-            btnSuper.setEnabled(true);
+            btnShutter.setEnabled(true);
             setStatus("");
             return;
         }
         if (remain <= 0) {
-            btnCapture.setEnabled(true);
-            btnSuper.setEnabled(true);
+            btnShutter.setEnabled(true);
             setStatus("");
             if (seq == timerSeq) shoot.run();
             return;
@@ -481,13 +525,12 @@ public class CameraActivity extends Activity implements LifecycleOwner, SensorEv
         final float sharpen = Prefs.sharpen(this);
         final int sample = effectiveSampleWidth(scale);
 
-        String name = getString(R.string.btn_super).replace("x2", "x" + scale);
-        btnSuper.setText(name);
+        String name = getString(R.string.mode_super) + " x" + scale;
+        btnModeSuper.setText(name);
         capturing = true;
         cancelRequested = false;
         setStatus(getString(R.string.status_super));
-        btnCapture.setEnabled(false);
-        btnSuper.setEnabled(false);
+        btnShutter.setEnabled(false);
         btnCancel.setVisibility(View.VISIBLE);
         btnCancel.setEnabled(true);
 
@@ -560,8 +603,7 @@ public class CameraActivity extends Activity implements LifecycleOwner, SensorEv
     private void finishSuperState() {
         capturing = false;
         cancelRequested = false;
-        btnCapture.setEnabled(true);
-        btnSuper.setEnabled(true);
+        btnShutter.setEnabled(true);
         btnCancel.setVisibility(View.GONE);
     }
 
@@ -682,6 +724,46 @@ public class CameraActivity extends Activity implements LifecycleOwner, SensorEv
         return BitmapFactory.decodeFile(path, o);
     }
 
+    // ---------- 最近缩略角标 ----------
+
+    /** 查询 Pictures/FocusUpscale 下最新一张本应用保存的照片，显示为左下角缩略角标。 */
+    private void updateRecentThumb() {
+        if (imgRecent == null || imgRecentThumb == null) return;
+        if (Build.VERSION.SDK_INT < 29 && checkSelfPermission(android.Manifest.permission.READ_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED) {
+            imgRecent.setVisibility(View.GONE);
+            return;
+        }
+        String[] proj = { MediaStore.Images.Media._ID, MediaStore.Images.Media.DATA };
+        String selection = MediaStore.Images.Media.DISPLAY_NAME + " LIKE ?";
+        String[] selArgs = { "focus_upscale_%" };
+        String path = null;
+        try (Cursor c = getContentResolver().query(
+                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                proj, selection, selArgs,
+                MediaStore.Images.Media.DATE_ADDED + " DESC")) {
+            if (c != null && c.moveToFirst()) path = c.getString(1);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        if (path == null || path.isEmpty()) {
+            imgRecent.setVisibility(View.GONE);
+            return;
+        }
+        final String fp = path;
+        mainExecutor().execute(() -> {
+            final Bitmap b = decodeSampled(fp, 160);
+            runOnUiThread(() -> {
+                if (b != null) {
+                    imgRecentThumb.setImageBitmap(b);
+                    imgRecent.setVisibility(View.VISIBLE);
+                } else {
+                    imgRecent.setVisibility(View.GONE);
+                }
+            });
+        });
+    }
+
     // ---------- 水平仪传感器 ----------
 
     @Override
@@ -732,6 +814,7 @@ public class CameraActivity extends Activity implements LifecycleOwner, SensorEv
         // 从设置页返回后刷新取景辅助与参数
         aidOverlay.enable(Prefs.gridEnabled(this), Prefs.levelEnabled(this));
         registerSensorIfNeeded();
+        updateRecentThumb();
     }
 
     @Override

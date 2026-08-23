@@ -1,6 +1,6 @@
 {
-  "versionCode": 3,
-  "versionName": "2.1",
-  "apkUrl": "https://github.com/dargon682/focus-upscale-camera/releases/download/v2.1/app-release-v2.1.apk",
-  "changelog": "新增曝光补偿 EV、长按锁定对焦与曝光、定时自拍（3/5/10 秒）；优化拍摄体验。"
+  "versionCode": 4,
+  "versionName": "2.1-BETA",
+  "apkUrl": "https://github.com/dargon682/focus-upscale-camera/releases/download/BETA/app-release-BETA.apk",
+  "changelog": "全新品牌与 UI 重写（全能相机）：新增拍摄模式、网格样式、最近照片缩略角标。"
 }

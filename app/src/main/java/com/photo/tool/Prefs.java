@@ -34,6 +34,10 @@ public final class Prefs {
         int v = sp(c).getInt("quality", 1);
         return Math.max(0, Math.min(2, v));
     }
+    /** 网格样式：0 关 / 1 九宫格 / 2 黄金分割 */
+    public static int gridStyle(Context c) {
+        return Math.max(0, Math.min(2, sp(c).getInt("grid_style", 1)));
+    }
 
     // ---- 写入 ----
     public static void putGrid(Context c, boolean v)   { sp(c).edit().putBoolean("grid", v).apply(); }
@@ -43,6 +47,7 @@ public final class Prefs {
     public static void putFrames(Context c, int v)     { sp(c).edit().putInt("frames", v).apply(); }
     public static void putSharpen(Context c, float v)  { sp(c).edit().putFloat("sharpen", v).apply(); }
     public static void putQuality(Context c, int v)    { sp(c).edit().putInt("quality", v).apply(); }
+    public static void putGridStyle(Context c, int v)  { sp(c).edit().putInt("grid_style", v).apply(); }
 
     /**
      * 超分内存保护：根据设备堆内存等级与目标超分倍数，计算安全的单帧采样宽度，

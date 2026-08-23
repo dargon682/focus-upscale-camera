@@ -2,4 +2,21 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
     <color name="accent">#FF4081</color>
+
+    <!-- 深色设计色板 -->
+    <color name="bg_deep">#0E1117</color>
+    <color name="bg_card">#161B26</color>
+    <color name="bg_toolbar">#1C222E</color>
+    <color name="toolbar_translucent">#CC0E1117</color>
+    <color name="control_bar_bg">#E60E1117</color>
+    <color name="text_primary">#F2F4F8</color>
+    <color name="text_secondary">#98A2B3</color>
+    <color name="text_on_accent">#FFFFFF</color>
+    <color name="divider">#2A313E</color>
+    <color name="accent_blue">#4C9AFF</color>
+    <color name="shutter_ring">#FFFFFF</color>
+    <color name="shutter_inner">#E6FFFFFF</color>
+    <color name="danger">#FF5A5F</color>
+    <color name="success">#34C77B</color>
+    <color name="overlay_grid">#66FFFFFF</color>
 </resources>

@@ -1,0 +1,20 @@
+<resources>
+    <!-- 间距 -->
+    <dimen name="spacing_xs">4dp</dimen>
+    <dimen name="spacing_s">8dp</dimen>
+    <dimen name="spacing_m">12dp</dimen>
+    <dimen name="spacing_l">16dp</dimen>
+    <dimen name="spacing_xl">24dp</dimen>
+
+    <!-- 圆角 -->
+    <dimen name="radius_s">8dp</dimen>
+    <dimen name="radius_m">12dp</dimen>
+    <dimen name="radius_l">20dp</dimen>
+    <dimen name="radius_pill">999dp</dimen>
+
+    <!-- 控件尺寸 -->
+    <dimen name="icon_btn_size">44dp</dimen>
+    <dimen name="icon_btn_radius">22dp</dimen>
+    <dimen name="shutter_size">84dp</dimen>
+    <dimen name="toolbar_padding">12dp</dimen>
+</resources>

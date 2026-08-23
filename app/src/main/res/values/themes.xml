@@ -2,5 +2,7 @@
     <style name="AppTheme" parent="android:Theme.Black.NoTitleBar.Fullscreen">
         <item name="android:statusBarColor">@color/black</item>
         <item name="android:navigationBarColor">@color/black</item>
+        <item name="android:windowBackground">@color/bg_deep</item>
+        <item name="android:colorAccent">@color/accent_blue</item>
     </style>
 </resources>

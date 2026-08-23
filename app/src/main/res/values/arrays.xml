@@ -38,4 +38,14 @@
         <item>1</item>
         <item>2</item>
     </string-array>
+    <string-array name="grid_entries">
+        <item>@string/grid_off</item>
+        <item>@string/grid_thirds</item>
+        <item>@string/grid_golden</item>
+    </string-array>
+    <string-array name="grid_values">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+    </string-array>
 </resources>
