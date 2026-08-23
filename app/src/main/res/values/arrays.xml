@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="scale_entries">
+        <item>2 倍（推荐）</item>
+        <item>3 倍</item>
+    </string-array>
+    <string-array name="scale_values">
+        <item>2</item>
+        <item>3</item>
+    </string-array>
+    <string-array name="frames_entries">
+        <item>5 帧</item>
+        <item>7 帧（推荐）</item>
+        <item>9 帧</item>
+    </string-array>
+    <string-array name="frames_values">
+        <item>5</item>
+        <item>7</item>
+        <item>9</item>
+    </string-array>
+    <string-array name="sharpen_entries">
+        <item>柔和</item>
+        <item>适中（推荐）</item>
+        <item>强烈</item>
+    </string-array>
+    <string-array name="sharpen_values">
+        <item>0.4</item>
+        <item>0.9</item>
+        <item>1.4</item>
+    </string-array>
+    <string-array name="quality_entries">
+        <item>流畅（960）</item>
+        <item>均衡（1200）</item>
+        <item>清晰（1440）</item>
+    </string-array>
+    <string-array name="quality_values">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+    </string-array>
+</resources>

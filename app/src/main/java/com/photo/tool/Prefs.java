@@ -1,0 +1,60 @@
+package com.photo.tool;
+
+import android.content.Context;
+import android.content.SharedPreferences;
+
+/** 应用设置持久化：读取/写入用户的各项功能开关与超分参数。 */
+public final class Prefs {
+
+    private static final String FILE = "photo_tool_settings";
+
+    private Prefs() { }
+
+    private static SharedPreferences sp(Context c) {
+        return c.getSharedPreferences(FILE, Context.MODE_PRIVATE);
+    }
+
+    // ---- 功能开关 ----
+    public static boolean gridEnabled(Context c) { return sp(c).getBoolean("grid", false); }
+    public static boolean levelEnabled(Context c) { return sp(c).getBoolean("level", false); }
+    public static boolean compareEnabled(Context c) { return sp(c).getBoolean("compare", true); }
+
+    // ---- 超分参数 ----
+    public static int scale(Context c) { int v = sp(c).getInt("scale", 2); return v == 3 ? 3 : 2; }
+    public static int frames(Context c) {
+        int v = sp(c).getInt("frames", 7);
+        return Math.max(3, Math.min(11, v));
+    }
+    public static float sharpen(Context c) {
+        float f = sp(c).getFloat("sharpen", 0.9f);
+        return Math.max(0.2f, Math.min(2.0f, f));
+    }
+    /** 采样画质档位：0 流畅 / 1 均衡 / 2 清晰 */
+    public static int quality(Context c) {
+        int v = sp(c).getInt("quality", 1);
+        return Math.max(0, Math.min(2, v));
+    }
+
+    // ---- 写入 ----
+    public static void putGrid(Context c, boolean v)   { sp(c).edit().putBoolean("grid", v).apply(); }
+    public static void putLevel(Context c, boolean v)  { sp(c).edit().putBoolean("level", v).apply(); }
+    public static void putCompare(Context c, boolean v){ sp(c).edit().putBoolean("compare", v).apply(); }
+    public static void putScale(Context c, int v)      { sp(c).edit().putInt("scale", v).apply(); }
+    public static void putFrames(Context c, int v)     { sp(c).edit().putInt("frames", v).apply(); }
+    public static void putSharpen(Context c, float v)  { sp(c).edit().putFloat("sharpen", v).apply(); }
+    public static void putQuality(Context c, int v)    { sp(c).edit().putInt("quality", v).apply(); }
+
+    /**
+     * 超分内存保护：根据设备堆内存等级与目标超分倍数，计算安全的单帧采样宽度，
+     * 使输出高分辨率网格的 float 工作缓冲不超过可承受范围，防止低端机 OOM。
+     */
+    public static int safeSampleWidth(int heapMb, int scale, int defaultWidth) {
+        // 峰值工作时约占 24B/输出像素（accRGB 3*4B + count 4B + tmp 4B + out/blur 各 4B，
+        // 输入侧缓冲按 1/scale^2 折算），取堆内存的 55% 作为可用预算，降低 OOM 概率。
+        double usable = heapMb * 1024d * 1024d * 0.55;
+        double outPixels = usable / 24.0;
+        double side = Math.sqrt(outPixels) / scale;
+        int sw = (int) Math.floor(side);
+        return Math.min(defaultWidth, Math.max(256, sw));
+    }
+}

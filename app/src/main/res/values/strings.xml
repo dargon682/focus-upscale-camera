@@ -1,0 +1,58 @@
+<resources>
+    <string name="app_name">对焦超分相机</string>
+    <string name="permission_rationale">需要相机权限才能进行拍摄、对焦与多帧合成。</string>
+    <string name="btn_capture">拍照</string>
+    <string name="btn_super">超分 x2</string>
+    <string name="btn_focus">自动对焦</string>
+    <string name="btn_back">返回</string>
+    <string name="btn_save">保存</string>
+    <string name="hint_tap_focus">点按画面可二次对焦</string>
+    <string name="status_super">正在捕捉多帧并合成…请保持手机稳定</string>
+    <string name="status_processing">合成中…</string>
+
+    <!-- 顶部工具栏 -->
+    <string name="btn_settings">设置</string>
+    <string name="btn_switch_camera">切换</string>
+    <string name="btn_flash_off">闪光·关</string>
+    <string name="btn_flash_auto">闪光·自动</string>
+    <string name="btn_flash_on">闪光·开</string>
+    <string name="btn_gallery">相册</string>
+    <string name="btn_cancel">取消连拍</string>
+
+    <!-- 取景辅助 -->
+    <string name="level_flat">水平</string>
+    <string name="level_hint">对准水平线</string>
+
+    <!-- 设置页 -->
+    <string name="settings_title">设置</string>
+    <string name="settings_subtitle">功能开关与本机超分合成参数</string>
+    <string name="section_overlay">取景辅助（功能开关）</string>
+    <string name="section_super">超分合成（参数）</string>
+    <string name="lbl_grid">九宫格构图线</string>
+    <string name="lbl_level">水平仪</string>
+    <string name="lbl_compare">原图 / 超分对比</string>
+    <string name="lbl_scale">超分倍数</string>
+    <string name="lbl_frames">连拍帧数</string>
+    <string name="lbl_sharpen">锐化强度</string>
+    <string name="lbl_quality">采样画质</string>
+    <string name="section_update">应用</string>
+    <string name="btn_check_update">检查更新</string>
+    <string name="upd_found">发现新版本 %1$s，更新内容：\n%2$s\n\n是否现在下载更新？</string>
+    <string name="upd_current">当前已是最新版本（v%1$s）</string>
+    <string name="upd_checking">正在检查更新…</string>
+    <string name="upd_fail">检查更新失败，请检查网络</string>
+    <string name="upd_downloading">开始下载更新…</string>
+    <string name="btn_download">下载更新</string>
+    <string name="section_quality">画质</string>
+
+    <!-- 相册页 -->
+    <string name="gallery_title">历史相册</string>
+    <string name="gallery_empty">暂无已保存的照片</string>
+    <string name="gallery_permission">需要存储权限浏览历史照片</string>
+
+    <!-- 结果页 -->
+    <string name="btn_compare">对比</string>
+    <string name="btn_view_super">超分</string>
+    <string name="btn_view_orig">原图</string>
+    <string name="hint_compare">左右拖动分隔线对比，双指放大</string>
+</resources>

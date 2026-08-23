@@ -1,0 +1,6 @@
+{
+  "versionCode": 2,
+  "versionName": "2.0",
+  "apkUrl": "https://github.com/dargon682/focus-upscale-camera/releases/download/v2.0/app-release.apk",
+  "changelog": "新增数字变焦、连拍进度与取消、画质档位、历史相册、检查更新；重构项目结构并压缩资源。"
+}
