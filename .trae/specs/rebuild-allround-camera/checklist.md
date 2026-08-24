@@ -10,6 +10,6 @@
 - [x] 设置页为分组卡片布局且含「网格样式」选项，选择持久化
 - [x] 相册页、结果页与新设计一致
 - [x] 原有功能（对焦、变焦、EV、闪光、前后摄、连拍进度/取消、相册、对比、更新检查）全部保留且可构建
-- [ ] `./gradlew assembleRelease` 成功，产出 BETA APK 并放入 dist/（构建期产物不入库）
-- [ ] 源码推送 GitHub，BETA Release 附 APK，version.json 已更新且更新 URL 可达
-- [ ] README 更新为「全能相机」与 BETA 版本信息
+- [x] `./gradlew assembleRelease` 成功，产出 BETA APK 并放入 `dist/`（构建期产物不入库）
+- [x] 源码推送 GitHub，BETA Release 附 APK，version.json 已更新且更新 URL 可达
+- [x] README 更新为「全能相机」与 BETA 版本信息
