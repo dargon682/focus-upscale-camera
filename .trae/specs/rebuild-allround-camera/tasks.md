@@ -32,9 +32,9 @@
 - [x] 6.3 清理重复/未用资源，统一通过 colors/dimens/drawable 引用
 
 ## Task 7: 构建、发布闭环
-- [ ] 7.1 `./gradlew assembleRelease` 编译通过，产出 BETA APK 并置入 `dist/`
-- [ ] 7.2 本地冒烟：资源引用、布局 id、字符串占位（`%1$s/%1$d`）无缺失；ProGuard release 可构建
-- [ ] 7.3 推送 GitHub：提交源码、创建 BETA Release 附 APK、更新 `version.json` 并验证更新 URL 可达
+- [x] 7.1 `./gradlew assembleRelease` 编译通过，产出 BETA APK 并置入 `dist/`
+- [x] 7.2 本地冒烟：资源引用、布局 id、字符串占位（`%1$s/%1$d`）无缺失；ProGuard release 可构建
+- [x] 7.3 推送 GitHub：提交源码、创建 BETA Release 附 APK、更新 `version.json` 并验证更新 URL 可达
 
 # Task Dependencies
 - Task 2 依赖 Task 1 的版本/命名上下文（可选，可并行）

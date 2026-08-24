@@ -4,15 +4,15 @@
     <color name="accent">#FF4081</color>
 
     <!-- 深色设计色板 -->
-    <color name="bg_deep">#F4F6FA</color>
-    <color name="bg_card">#FFFFFF</color>
-    <color name="bg_toolbar">#EFF2F8</color>
-    <color name="toolbar_translucent">#E6FFFFFF</color>
-    <color name="control_bar_bg">#F0FFFFFF</color>
-    <color name="text_primary">#16181D</color>
-    <color name="text_secondary">#5D6470</color>
+    <color name="bg_deep">#0E1117</color>
+    <color name="bg_card">#161B26</color>
+    <color name="bg_toolbar">#1C222E</color>
+    <color name="toolbar_translucent">#CC0E1117</color>
+    <color name="control_bar_bg">#E60E1117</color>
+    <color name="text_primary">#F2F4F8</color>
+    <color name="text_secondary">#98A2B3</color>
     <color name="text_on_accent">#FFFFFF</color>
-    <color name="divider">#E4E7EE</color>
+    <color name="divider">#2A313E</color>
     <color name="accent_blue">#4C9AFF</color>
     <color name="shutter_ring">#FFFFFF</color>
     <color name="shutter_inner">#E6FFFFFF</color>
