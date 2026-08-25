@@ -167,9 +167,12 @@ public final class SuperResolution {
      * 返回相对参考的亚像素平移 (dx, dy)：cur 采样点在 ref 坐标系中的偏移。
      * 先缩略粗搜整数，再整幅细搜整数，最后用三段 SSD 抛物线拟合求亚像素偏移，
      * 从而让不同帧落在高分辨率网格的不同亚像素位置，形成真正的超分辨率交叠采样。
+     * 返回值 float[3] = {dx, dy, 最小SSD代价}，代价用于帧级置信度过滤。
      */
     private static float[] findShift(byte[] refGray, byte[] curGray, int w, int h) {
-        int scaleDown = 4;
+        // 下采样 8x：粗搜每 mv 对应 ±8 像素，整体搜索范围扩大至 ±64px（覆盖手持抖动），
+        // 同时粗搜耗时比 scaleDown=4 更低。
+        int scaleDown = 8;
         int cw = w / scaleDown;
         int ch = h / scaleDown;
         byte[] rS = shrink(refGray, w, h, cw, ch, scaleDown);
@@ -190,11 +193,11 @@ public final class SuperResolution {
         bestCx *= scaleDown;
         bestCy *= scaleDown;
 
-        // 细搜 ±2
+        // 细搜 ±3
         int bestX = bestCx, bestY = bestCy;
         long bestCost2 = Long.MAX_VALUE;
-        for (int dy = -2; dy <= 2; dy++) {
-            for (int dx = -2; dx <= 2; dx++) {
+        for (int dy = -3; dy <= 3; dy++) {
+            for (int dx = -3; dx <= 3; dx++) {
                 long c = ssd(refGray, curGray, w, h, bestCx + dx, bestY + dy);
                 if (c < bestCost2) {
                     bestCost2 = c;
@@ -212,7 +215,8 @@ public final class SuperResolution {
                 ssd(refGray, curGray, w, h, bestX, bestY),
                 ssd(refGray, curGray, w, h, bestX, bestY + 1));
 
-        return new float[]{bestX + subX, bestY + subY};
+        // 附带返回细搜后的最小 SSD 代价，供调用方做帧级置信度过滤
+        return new float[]{bestX + subX, bestY + subY, (float) bestCost2};
     }
 
     /** 用三点 (f(-1), f(0), f(1)) 拟合二次曲线极小点的亚像素偏移，范围限制在 [-1, 1]。 */
@@ -329,6 +333,7 @@ public final class SuperResolution {
         final float[] tmp;
         final int[] curPix;
         final byte[] curGray;
+        float refMean = 0f;
         int frames = 0;
 
         Stream(int w, int h, int scale) {
@@ -351,7 +356,7 @@ public final class SuperResolution {
         return new Stream(w, h, scale);
     }
 
-    /** 添加一帧。首帧作为参考（shift=0），其后各帧做亚像素配准并对齐。 */
+    /** 添加一帧。首帧作为参考（shift=0），其后各帧做亚像素配准、亮度归一化并对齐。 */
     public static void addFrame(Stream s, Bitmap bmp) {
         int w = s.w, h = s.h;
         if (bmp.getWidth() != w || bmp.getHeight() != h) {
@@ -361,25 +366,101 @@ public final class SuperResolution {
         }
         bmp.getPixels(s.curPix, 0, w, 0, 0, w, h);
 
-        float dx, dy;
         if (s.refGray == null) {
-            // 首帧即参考帧
+            // 首帧即参考帧：全量加入，不做剔除/增益
             s.refPix = s.curPix.clone();
             s.refGray = toGray(s.refPix, w, h);
-            dx = 0f; dy = 0f;
+            s.refMean = meanGray(s.refGray);
+            scaleChannelAligned(s.curPix, w, h, 'R', s.dw, s.dh, s.scale, 0f, 0f, s.tmp);
+            accumulate(s.tmp, s.accR, s.count);
+            scaleChannelAligned(s.curPix, w, h, 'G', s.dw, s.dh, s.scale, 0f, 0f, s.tmp);
+            accumulate(s.tmp, s.accG, s.count);
+            scaleChannelAligned(s.curPix, w, h, 'B', s.dw, s.dh, s.scale, 0f, 0f, s.tmp);
+            accumulate(s.tmp, s.accB, s.count);
         } else {
             toGrayInto(s.curPix, w, h, s.curGray);
-            float[] sh = findShift(s.refGray, s.curGray, w, h);
-            dx = sh[0]; dy = sh[1];
+            // 帧间亮度归一化：消除快速连拍导致的欠曝/闪烁，避免合成后整体偏暗
+            float curMean = meanGray(s.curGray);
+            float gain = (s.refMean > 1f && curMean > 1f)
+                    ? clampGain(s.refMean / curMean) : 1f;
+            // 用亮度归一化后的灰度做配准：既避免亮度差干扰几何估计（配准更准→少重影），
+            // 又能用其 SSD 代价做帧级置信度过滤
+            byte[] eqGray = s.curGray;
+            if (Math.abs(gain - 1f) > 0.02f) {
+                eqGray = new byte[s.curGray.length];
+                for (int ii = 0; ii < eqGray.length; ii++) {
+                    eqGray[ii] = (byte) clamp(Math.round((s.curGray[ii] & 0xFF) * gain));
+                }
+            }
+            float[] sh = findShift(s.refGray, eqGray, w, h);
+            float dx = sh[0], dy = sh[1];
+            // 帧级置信度过滤：配准失败或主体大幅运动导致残差过高时，跳过该帧，避免错位污染平均
+            if (sh[2] / (float) (w * h) > FRAME_COST_THRESH) {
+                s.frames++;
+                return;
+            }
+            scaleChannelAlignedMasked(s.curPix, s.curGray, s.refGray, gain,
+                    w, h, 'R', s.dw, s.dh, s.scale, dx, dy, s.tmp);
+            accumulate(s.tmp, s.accR, s.count);
+            scaleChannelAlignedMasked(s.curPix, s.curGray, s.refGray, gain,
+                    w, h, 'G', s.dw, s.dh, s.scale, dx, dy, s.tmp);
+            accumulate(s.tmp, s.accG, s.count);
+            scaleChannelAlignedMasked(s.curPix, s.curGray, s.refGray, gain,
+                    w, h, 'B', s.dw, s.dh, s.scale, dx, dy, s.tmp);
+            accumulate(s.tmp, s.accB, s.count);
         }
-
-        scaleChannelAligned(s.curPix, w, h, 'R', s.dw, s.dh, s.scale, dx, dy, s.tmp);
-        accumulate(s.tmp, s.accR, s.count);
-        scaleChannelAligned(s.curPix, w, h, 'G', s.dw, s.dh, s.scale, dx, dy, s.tmp);
-        accumulate(s.tmp, s.accG, s.count);
-        scaleChannelAligned(s.curPix, w, h, 'B', s.dw, s.dh, s.scale, dx, dy, s.tmp);
-        accumulate(s.tmp, s.accB, s.count);
         s.frames++;
+    }
+
+    /** 运动一致性剔除阈值：与参考帧对应点灰度差超过该值时视为运动区域，不累加（消除重影）。
+     *  取值放宽以免过度剔除削弱有效超分（只在局部运动明显处剔除）。 */
+    private static final int GHOST_THRESH = 64;
+
+    /**
+     * 帧级置信度过滤：配准后每像素平均 SSD 代价超过该值时视为配准失败或整帧主体大幅运动，
+     * 该帧整体不参与累加，避免错位帧污染平均造成全局重影。单位：灰度平方差/像素。
+     */
+    private static final float FRAME_COST_THRESH = 1200f;
+
+    /** 亮度增益安全区间，避免某帧极黑/极亮时增益失稳。 */
+    private static float clampGain(float g) {
+        return g < 0.35f ? 0.35f : (g > 2.8f ? 2.8f : g);
+    }
+
+    /** 带运动剔除 + 亮度归一化的对齐采样；与 scaleChannelAligned 等价但会跳过运动像素。 */
+    private static void scaleChannelAlignedMasked(int[] src, byte[] srcGray, byte[] refGray,
+                                                  float gain, int sw, int sh,
+                                                  char ch, int dw, int dh, int scale,
+                                                  float dx, float dy, float[] tmp) {
+        for (int ty = 0; ty < dh; ty++) {
+            float sy = ty / (float) scale + dy;
+            int rowOff = ty * dw;
+            for (int tx = 0; tx < dw; tx++) {
+                float sx = tx / (float) scale + dx;
+                if (sx < 0 || sx > sw - 1 || sy < 0 || sy > sh - 1) {
+                    tmp[rowOff + tx] = -1f;
+                    continue;
+                }
+                // 运动剔除：比较当前帧与参考帧在同一点的灰度，差异过大则跳过该像素
+                int cx = Math.max(0, Math.min(sw - 1, Math.round(sx)));
+                int cy = Math.max(0, Math.min(sh - 1, Math.round(sy)));
+                int rx = Math.max(0, Math.min(sw - 1, Math.round(sx - dx)));
+                int ry = Math.max(0, Math.min(sh - 1, Math.round(sy - dy)));
+                int diff = Math.abs((srcGray[cy * sw + cx] & 0xFF)
+                        - (refGray[ry * sw + rx] & 0xFF));
+                if (diff > GHOST_THRESH) {
+                    tmp[rowOff + tx] = -1f;
+                    continue;
+                }
+                tmp[rowOff + tx] = bicubicSample(src, sw, sh, sx, sy, ch) * gain;
+            }
+        }
+    }
+
+    private static float meanGray(byte[] g) {
+        long sum = 0;
+        for (byte b : g) sum += b & 0xFF;
+        return sum / (float) g.length;
     }
 
     /** 归一化、锐化并输出最终 Bitmap。调用后 Stream 即可丢弃。 */
@@ -394,7 +475,33 @@ public final class SuperResolution {
             int b = (int) (s.accB[i] / c + 0.5f);
             out[i] = (0xFF << 24) | (clamp(r) << 16) | (clamp(g) << 8) | clamp(b);
         }
+        // 最终亮度对齐到参考帧（原图）亮度：多帧平均即使在帧间归一化后仍可能比原图偏暗，
+        // 此处按整体灰度均值做一次保守线性对齐，保证超分结果不至于比原图更暗。
+        float align = clampAlign(s.refMean / meanImage(out));
+        if (Math.abs(align - 1f) > 0.02f) {
+            for (int i = 0; i < n; i++) {
+                int p = out[i];
+                out[i] = (0xFF << 24)
+                        | (clamp(Math.round(((p >> 16) & 0xFF) * align)) << 16)
+                        | (clamp(Math.round(((p >> 8) & 0xFF) * align)) << 8)
+                        | clamp(Math.round((p & 0xFF) * align));
+            }
+        }
         out = unsharp(out, s.dw, s.dh, 2, sharpen);
         return Bitmap.createBitmap(out, s.dw, s.dh, Bitmap.Config.ARGB_8888);
+    }
+
+    /** 图像整体灰度均值（ARGB_8888）。 */
+    private static float meanImage(int[] img) {
+        long sum = 0;
+        for (int p : img) {
+            sum += ((p >> 16) & 0xFF) * 299 + ((p >> 8) & 0xFF) * 587 + (p & 0xFF) * 114;
+        }
+        return (sum / 1000f) / img.length;
+    }
+
+    /** 最终亮度对齐增益：保守区间 [0.6, 1.6]，避免矫正过度造成过曝/欠曝。 */
+    private static float clampAlign(float g) {
+        return g < 0.6f ? 0.6f : (g > 1.6f ? 1.6f : g);
     }
 }
