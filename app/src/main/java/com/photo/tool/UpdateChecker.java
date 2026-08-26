@@ -56,9 +56,9 @@ public final class UpdateChecker {
             "https://ghproxy.net/"    // ghproxy 加速
     };
 
-    /** 测速基准文件（仓库内 APK raw 地址，较大以便稳定测得各源真实带宽）。 */
+    /** 测速基准文件（仓库内 1MB 随机样本，raw 地址；固定大小便于稳定测得各源真实带宽）。 */
     private static final String SPEED_BASE =
-            "https://raw.githubusercontent.com/dargon682/focus-upscale-camera/main/apk/photo-tool-v0.6.300.apk";
+            "https://raw.githubusercontent.com/dargon682/focus-upscale-camera/main/benchmark/1mb.bin";
 
     /** 测速读取量：每源读取 1MB 计时。 */
     private static final int SPEED_READ_BYTES = 1_048_576;

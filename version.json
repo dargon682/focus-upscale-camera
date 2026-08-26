@@ -1,6 +1,6 @@
 {
-  "versionCode": 11,
-  "versionName": "0.6.300",
-  "apkUrl": "https://raw.githubusercontent.com/dargon682/focus-upscale-camera/main/apk/photo-tool-v0.6.300.apk",
-  "changelog": "修复 Only the original thread that created a view hierarchy can touch its views 崩溃：下载进度条与百分比更新原在后台线程直接改 View，现将全部进度 UI 操作投递到主线程，杜绝线程违规。"
+  "versionCode": 12,
+  "versionName": "0.6.31",
+  "apkUrl": "https://raw.githubusercontent.com/dargon682/focus-upscale-camera/main/apk/photo-tool-v0.6.31.apk",
+  "changelog": "测速标准更新：改用仓库独立 1MB 基准文件（benchmark/1mb.bin）作各镜像源测速样本，固定大小测速更稳定准确。"
 }
