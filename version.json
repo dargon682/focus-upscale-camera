@@ -1,6 +1,6 @@
 {
-  "versionCode": 7,
-  "versionName": "0.5.200",
+  "versionCode": 8,
+  "versionName": "0.6.000",
   "apkUrl": "https://github.com/dargon682/focus-upscale-camera/releases/download/BETA/app-release-BETA.apk",
-  "changelog": "新增下载镜像源自动测速：设置页可一键测试各源下载速度，自动选取最快源下载；亦支持手动指定镜像。版本清单与下载均多源自动回退。"
+  "changelog": "前端整体重新设计为现代专业数码相机（cinematic MILC）风格：墨黑机体配色、琥珀机内 HUD 读数、机械滚花快门外观、四角琥珀对焦框、等宽参数排版、琥珀取景网格与配色体系全面深色统一。"
 }

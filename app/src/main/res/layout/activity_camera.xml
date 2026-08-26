@@ -18,7 +18,7 @@
         android:clickable="false"
         android:focusable="false" />
 
-    <!-- 对焦方框指示 -->
+    <!-- 对焦方框指示（琥珀四角） -->
     <View
         android:id="@+id/focusBox"
         android:layout_width="80dp"
@@ -26,95 +26,130 @@
         android:visibility="invisible"
         android:background="@drawable/bg_focus_box" />
 
-    <!-- 顶部工具栏：EV / 延时 / 闪光 / 前后摄 / 设置 / 相册 -->
+    <!-- 左上角 机内读数 HUD 条：模式 / 输出档位（等宽琥珀） -->
+    <TextView
+        android:id="@+id/tvHud"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|start"
+        android:layout_margin="@dimen/spacing_m"
+        android:background="@drawable/bg_capsule"
+        android:fontFamily="monospace"
+        android:paddingStart="@dimen/hud_pad_h"
+        android:paddingEnd="@dimen/hud_pad_h"
+        android:paddingTop="@dimen/hud_pad_v"
+        android:paddingBottom="@dimen/hud_pad_v"
+        android:text="@string/hud_default"
+        android:textColor="@color/hud_amber"
+        android:textSize="@dimen/hud_font" />
+
+    <!-- 右上 HUD 工具栏：EV / 延时 / 闪光 / 前后摄 / 设置 / 相册 -->
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="top|end"
         android:layout_margin="@dimen/spacing_m"
-        android:padding="@dimen/toolbar_padding"
-        android:orientation="horizontal">
+        android:orientation="vertical">
 
-        <Button
-            android:id="@+id/btnEv"
-            android:layout_width="@dimen/icon_btn_size"
-            android:layout_height="@dimen/icon_btn_size"
-            android:layout_margin="@dimen/spacing_xs"
-            android:minWidth="0dp"
-            android:minHeight="0dp"
-            android:stateListAnimator="@null"
-            android:background="@drawable/bg_icon_button"
-            android:text="@string/btn_ev_0"
-            android:textColor="@color/text_primary"
-            android:textSize="12sp" />
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
 
-        <Button
-            android:id="@+id/btnTimer"
-            android:layout_width="@dimen/icon_btn_size"
-            android:layout_height="@dimen/icon_btn_size"
-            android:layout_margin="@dimen/spacing_xs"
-            android:minWidth="0dp"
-            android:minHeight="0dp"
-            android:stateListAnimator="@null"
-            android:background="@drawable/bg_icon_button"
-            android:text="@string/btn_timer_off"
-            android:textColor="@color/text_primary"
-            android:textSize="12sp" />
+            <Button
+                android:id="@+id/btnEv"
+                android:layout_width="@dimen/icon_btn_size"
+                android:layout_height="@dimen/icon_btn_size"
+                android:layout_margin="@dimen/spacing_xs"
+                android:minWidth="0dp"
+                android:minHeight="0dp"
+                android:stateListAnimator="@null"
+                android:background="@drawable/bg_icon_button"
+                android:fontFamily="monospace"
+                android:text="@string/btn_ev_0"
+                android:textColor="@color/text_primary"
+                android:textSize="12sp" />
 
-        <Button
-            android:id="@+id/btnFlash"
-            android:layout_width="@dimen/icon_btn_size"
-            android:layout_height="@dimen/icon_btn_size"
-            android:layout_margin="@dimen/spacing_xs"
-            android:minWidth="0dp"
-            android:minHeight="0dp"
-            android:stateListAnimator="@null"
-            android:background="@drawable/bg_icon_button"
-            android:text="@string/btn_flash_off"
-            android:textColor="@color/text_primary"
-            android:textSize="12sp" />
+            <Button
+                android:id="@+id/btnTimer"
+                android:layout_width="@dimen/icon_btn_size"
+                android:layout_height="@dimen/icon_btn_size"
+                android:layout_margin="@dimen/spacing_xs"
+                android:minWidth="0dp"
+                android:minHeight="0dp"
+                android:stateListAnimator="@null"
+                android:background="@drawable/bg_icon_button"
+                android:fontFamily="monospace"
+                android:text="@string/btn_timer_off"
+                android:textColor="@color/text_primary"
+                android:textSize="12sp" />
 
-        <Button
-            android:id="@+id/btnSwitchCamera"
-            android:layout_width="@dimen/icon_btn_size"
-            android:layout_height="@dimen/icon_btn_size"
-            android:layout_margin="@dimen/spacing_xs"
-            android:minWidth="0dp"
-            android:minHeight="0dp"
-            android:stateListAnimator="@null"
-            android:background="@drawable/bg_icon_button"
-            android:text="@string/btn_switch_camera"
-            android:textColor="@color/text_primary"
-            android:textSize="12sp" />
+            <Button
+                android:id="@+id/btnFlash"
+                android:layout_width="@dimen/icon_btn_size"
+                android:layout_height="@dimen/icon_btn_size"
+                android:layout_margin="@dimen/spacing_xs"
+                android:minWidth="0dp"
+                android:minHeight="0dp"
+                android:stateListAnimator="@null"
+                android:background="@drawable/bg_icon_button"
+                android:fontFamily="monospace"
+                android:text="@string/btn_flash_off"
+                android:textColor="@color/text_primary"
+                android:textSize="12sp" />
+        </LinearLayout>
 
-        <Button
-            android:id="@+id/btnSettings"
-            android:layout_width="@dimen/icon_btn_size"
-            android:layout_height="@dimen/icon_btn_size"
-            android:layout_margin="@dimen/spacing_xs"
-            android:minWidth="0dp"
-            android:minHeight="0dp"
-            android:stateListAnimator="@null"
-            android:background="@drawable/bg_icon_button"
-            android:text="@string/btn_settings"
-            android:textColor="@color/text_primary"
-            android:textSize="12sp" />
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end"
+            android:orientation="horizontal">
 
-        <Button
-            android:id="@+id/btnGallery"
-            android:layout_width="@dimen/icon_btn_size"
-            android:layout_height="@dimen/icon_btn_size"
-            android:layout_margin="@dimen/spacing_xs"
-            android:minWidth="0dp"
-            android:minHeight="0dp"
-            android:stateListAnimator="@null"
-            android:background="@drawable/bg_icon_button"
-            android:text="@string/btn_gallery"
-            android:textColor="@color/text_primary"
-            android:textSize="12sp" />
+            <Button
+                android:id="@+id/btnSwitchCamera"
+                android:layout_width="@dimen/icon_btn_size"
+                android:layout_height="@dimen/icon_btn_size"
+                android:layout_margin="@dimen/spacing_xs"
+                android:minWidth="0dp"
+                android:minHeight="0dp"
+                android:stateListAnimator="@null"
+                android:background="@drawable/bg_icon_button"
+                android:fontFamily="monospace"
+                android:text="@string/btn_switch_camera"
+                android:textColor="@color/text_primary"
+                android:textSize="11sp" />
+
+            <Button
+                android:id="@+id/btnSettings"
+                android:layout_width="@dimen/icon_btn_size"
+                android:layout_height="@dimen/icon_btn_size"
+                android:layout_margin="@dimen/spacing_xs"
+                android:minWidth="0dp"
+                android:minHeight="0dp"
+                android:stateListAnimator="@null"
+                android:background="@drawable/bg_icon_button"
+                android:fontFamily="monospace"
+                android:text="@string/btn_settings"
+                android:textColor="@color/text_primary"
+                android:textSize="11sp" />
+
+            <Button
+                android:id="@+id/btnGallery"
+                android:layout_width="@dimen/icon_btn_size"
+                android:layout_height="@dimen/icon_btn_size"
+                android:layout_margin="@dimen/spacing_xs"
+                android:minWidth="0dp"
+                android:minHeight="0dp"
+                android:stateListAnimator="@null"
+                android:background="@drawable/bg_icon_button"
+                android:fontFamily="monospace"
+                android:text="@string/btn_gallery"
+                android:textColor="@color/text_primary"
+                android:textSize="11sp" />
+        </LinearLayout>
     </LinearLayout>
 
-    <!-- 状态 / 倒计时文本：居中，半透明深底圆角 -->
+    <!-- 状态 / 倒计时：居中深色机内提示条 -->
     <TextView
         android:id="@+id/tvStatus"
         android:layout_width="wrap_content"
@@ -125,55 +160,64 @@
         android:paddingTop="@dimen/spacing_s"
         android:paddingBottom="@dimen/spacing_s"
         android:background="@drawable/bg_capsule"
+        android:fontFamily="monospace"
         android:text="@string/status_super"
-        android:textColor="@color/text_primary"
-        android:textSize="14sp"
+        android:textColor="@color/hud_amber"
+        android:textSize="13sp"
         android:visibility="invisible" />
 
-    <!-- 底部控制栏 -->
+    <!-- 底部控制面板：机械调节档 + 快门 -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
         android:orientation="vertical"
-        android:background="@color/control_bar_bg"
-        android:padding="@dimen/spacing_l">
+        android:background="@color/control_bar_bg">
 
-        <!-- 模式切换行 -->
+        <!-- 顶端琥珀细线：机体接缝 -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="2dp"
+            android:background="@color/accent" />
+
+        <!-- 模式切换行（拨盘挡位） -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_l"
             android:orientation="horizontal"
             android:gravity="center_horizontal">
 
             <Button
                 android:id="@+id/btnModePhoto"
                 android:layout_width="wrap_content"
-                android:layout_height="@dimen/icon_btn_size"
+                android:layout_height="@dimen/mode_dial_size"
                 android:layout_marginEnd="@dimen/spacing_s"
                 android:minWidth="0dp"
                 android:minHeight="0dp"
                 android:stateListAnimator="@null"
-                android:background="@drawable/bg_capsule"
+                android:background="@drawable/bg_icon_button_selected"
+                android:fontFamily="monospace"
                 android:text="@string/mode_photo"
-                android:textColor="@color/text_primary"
-                android:textSize="15sp" />
+                android:textColor="@color/text_on_accent"
+                android:textSize="14sp" />
 
             <Button
                 android:id="@+id/btnModeSuper"
                 android:layout_width="wrap_content"
-                android:layout_height="@dimen/icon_btn_size"
+                android:layout_height="@dimen/mode_dial_size"
                 android:layout_marginStart="@dimen/spacing_s"
                 android:minWidth="0dp"
                 android:minHeight="0dp"
                 android:stateListAnimator="@null"
                 android:background="@drawable/bg_capsule"
+                android:fontFamily="monospace"
                 android:text="@string/mode_super"
                 android:textColor="@color/text_secondary"
-                android:textSize="15sp" />
+                android:textSize="14sp" />
         </LinearLayout>
 
-        <!-- 快门行：大圆形快门 -->
+        <!-- 快门行：机械滚花快门 -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -218,27 +262,29 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
             android:layout_marginTop="@dimen/spacing_s"
+            android:layout_marginBottom="@dimen/spacing_s"
             android:text="@string/hint_pinch"
             android:textColor="@color/text_secondary"
             android:textSize="12sp" />
     </LinearLayout>
 
-    <!-- 左下角最近缩略角标 -->
+    <!-- 左下角最近缩略角标（琥珀描边） -->
     <FrameLayout
         android:id="@+id/imgRecent"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
+        android:layout_width="44dp"
+        android:layout_height="44dp"
         android:layout_gravity="bottom|start"
         android:layout_margin="@dimen/spacing_l"
         android:clickable="true"
         android:focusable="true"
-        android:background="@drawable/bg_card"
+        android:background="@drawable/bg_thumb_ring"
         android:visibility="gone">
 
         <ImageView
             android:id="@+id/imgRecentThumb"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:layout_margin="3dp"
             android:scaleType="centerCrop"
             android:contentDescription="@string/btn_recent" />
     </FrameLayout>

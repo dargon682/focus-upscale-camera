@@ -1,6 +1,48 @@
 <?xml version="1.0" encoding="utf-8"?>
-<shape xmlns:android="http://schemas.android.com/apk/res/android"
-    android:shape="oval">
-    <solid android:color="@color/shutter_inner" />
-    <stroke android:color="@color/shutter_ring" android:width="4dp" />
-</shape>
+<!-- 现代机械快门：滚花金属外圈 + 凸起顶帽（受光面亮、底部暗，营造凸起手感） -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 外圈滚花（分段虚线 ≡ 机加工痕迹） -->
+    <item>
+        <shape android:shape="oval">
+            <stroke
+                android:width="7dp"
+                android:color="@color/shutter_ring_hi"
+                android:dashWidth="2.5dp"
+                android:dashGap="4.5dp" />
+        </shape>
+    </item>
+    <!-- 外环实心基座 -->
+    <item>
+        <shape android:shape="oval">
+            <solid android:color="#3A3E47" />
+        </shape>
+    </item>
+    <!-- 中央黑色快门洞 -->
+    <item android:top="7dp" android:bottom="7dp" android:left="7dp" android:right="7dp">
+        <shape android:shape="oval">
+            <solid android:color="@color/shutter_inner" />
+        </shape>
+    </item>
+    <!-- 凸起顶帽：上亮下暗的垂直渐变 -->
+    <item android:top="15dp" android:bottom="15dp" android:left="15dp" android:right="15dp">
+        <shape android:shape="oval">
+            <gradient
+                android:angle="90"
+                android:startColor="#9FA4AE"
+                android:centerColor="#555A64"
+                android:endColor="#24262C"
+                android:type="linear" />
+        </shape>
+    </item>
+    <!-- 顶帽高光圆点（surface 反射） -->
+    <item android:top="20dp" android:bottom="20dp" android:left="20dp" android:right="20dp">
+        <shape android:shape="oval">
+            <gradient
+                android:angle="90"
+                android:startColor="#DDE0E4"
+                android:centerColor="#6A6F79"
+                android:endColor="#2E3138"
+                android:type="linear" />
+        </shape>
+    </item>
+</layer-list>

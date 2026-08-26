@@ -1,8 +1,11 @@
 <resources>
+    <!-- 专业数码后背主题：深色机体 + 琥珀强调 -->
     <style name="AppTheme" parent="android:Theme.Black.NoTitleBar.Fullscreen">
         <item name="android:statusBarColor">@color/bg_deep</item>
         <item name="android:navigationBarColor">@color/bg_deep</item>
         <item name="android:windowBackground">@color/bg_deep</item>
-        <item name="android:colorAccent">@color/accent_blue</item>
+        <item name="android:colorAccent">@color/accent</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
     </style>
 </resources>

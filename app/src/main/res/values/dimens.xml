@@ -13,8 +13,14 @@
     <dimen name="radius_pill">999dp</dimen>
 
     <!-- 控件尺寸 -->
-    <dimen name="icon_btn_size">44dp</dimen>
-    <dimen name="icon_btn_radius">22dp</dimen>
-    <dimen name="shutter_size">84dp</dimen>
-    <dimen name="toolbar_padding">12dp</dimen>
+    <dimen name="icon_btn_size">46dp</dimen>
+    <dimen name="icon_btn_radius">23dp</dimen>
+    <dimen name="shutter_size">88dp</dimen>
+    <dimen name="toolbar_padding">10dp</dimen>
+
+    <!-- 专业相机 HUD -->
+    <dimen name="hud_font">11sp</dimen>
+    <dimen name="hud_pad_h">10dp</dimen>
+    <dimen name="hud_pad_v">5dp</dimen>
+    <dimen name="mode_dial_size">44dp</dimen>
 </resources>
