@@ -1,6 +1,6 @@
 {
-  "versionCode": 6,
-  "versionName": "0.5.120",
+  "versionCode": 7,
+  "versionName": "0.5.200",
   "apkUrl": "https://github.com/dargon682/focus-upscale-camera/releases/download/BETA/app-release-BETA.apk",
-  "changelog": "修复更新下载无进度条、无镜像源可选的问题：新增应用内实时进度条与 GitHub 加速镜像（gh-proxy / ghproxy）选择，下载完成自动引导安装。"
+  "changelog": "新增下载镜像源自动测速：设置页可一键测试各源下载速度，自动选取最快源下载；亦支持手动指定镜像。版本清单与下载均多源自动回退。"
 }

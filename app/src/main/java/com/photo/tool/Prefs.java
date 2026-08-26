@@ -49,6 +49,16 @@ public final class Prefs {
     public static void putQuality(Context c, int v)    { sp(c).edit().putInt("quality", v).apply(); }
     public static void putGridStyle(Context c, int v)  { sp(c).edit().putInt("grid_style", v).apply(); }
 
+    // ---- 下载镜像源 ----
+    /** 下载镜像源：0 自动（测速选取最快） / 1 直连 / 2 gh-proxy / 3 ghproxy */
+    public static int downloadMirror(Context c) {
+        return Math.max(0, Math.min(3, sp(c).getInt("mirror", 0)));
+    }
+    public static void putDownloadMirror(Context c, int v) {
+        int val = Math.max(0, Math.min(3, v));
+        sp(c).edit().putInt("mirror", val).apply();
+    }
+
     /**
      * 超分内存保护：根据设备堆内存等级与目标超分倍数，计算安全的单帧采样宽度，
      * 使输出高分辨率网格的 float 工作缓冲不超过可承受范围，防止低端机 OOM。

@@ -56,6 +56,16 @@ public final class UpdateChecker {
             "https://ghproxy.net/"    // ghproxy 加速
     };
 
+    /** 测速基准文件（仓库内 APK raw 地址，较大以便稳定测得各源真实带宽）。 */
+    private static final String SPEED_BASE =
+            "https://raw.githubusercontent.com/dargon682/focus-upscale-camera/main/apk/photo-tool-v0.5.200.apk";
+
+    /** 测速读取量：每源读取 1MB 计时。 */
+    private static final int SPEED_READ_BYTES = 1_048_576;
+
+    /** 进程内缓存的最快镜像索引（由 testSpeeds 更新）。 */
+    private static volatile int bestMirrorIdx = 0;
+
     private static final ExecutorService exec = Executors.newFixedThreadPool(2);
     private static final Handler main = new Handler(Looper.getMainLooper());
     private static volatile boolean hasChecked = false;
@@ -133,7 +143,14 @@ public final class UpdateChecker {
      */
     public static void downloadWithUi(final Activity act, final String apkUrl) {
         final File target = new File(act.getFilesDir(), "focus-upscale-update.apk");
+        // 依据设置决定镜像：自动则用测速缓存的最快源
+        final int mode = Prefs.downloadMirror(act);
+        final int defSel = effectiveMirrorIndex(mode);
+        buildDownloadDialog(act, apkUrl, target, defSel);
+    }
 
+    private static void buildDownloadDialog(final Activity act, final String apkUrl,
+                                                   final File target, final int defSel) {
         // —— 构建下载对话框 ——
         LinearLayout root = new LinearLayout(act);
         root.setOrientation(LinearLayout.VERTICAL);
@@ -150,6 +167,7 @@ public final class UpdateChecker {
                 android.R.layout.simple_spinner_item, MIRROR_NAMES);
         adp.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinner.setAdapter(adp);
+        spinner.setSelection(Math.max(0, Math.min(MIRROR_NAMES.length - 1, defSel)));
         root.addView(spinner, lp(true));
 
         final ProgressBar bar = new ProgressBar(act, null, android.R.attr.progressBarStyleHorizontal);
@@ -188,6 +206,88 @@ public final class UpdateChecker {
 
     /** 取消下载标记。 */
     private static final AtomicBoolean currentCancel = new AtomicBoolean(false);
+
+    /** 根据设置模式解析最终镜像前缀：0 自动（取测速缓存的最快源）/ 1~3 手动。 */
+    static String resolveMirrorPrefix(int mode) {
+        int idx;
+        if (mode == 0) {
+            idx = bestMirrorIdx;
+        } else {
+            idx = mode - 1;
+        }
+        idx = Math.max(0, Math.min(MIRROR_PREFIXES.length - 1, idx));
+        return MIRROR_PREFIXES[idx];
+    }
+
+    /** 当前实际采用的镜像下标（0 自动时为测得的最快源）。 */
+    static int effectiveMirrorIndex(int mode) {
+        return mode == 0 ? bestMirrorIdx : Math.max(0, Math.min(MIRROR_PREFIXES.length - 1, mode - 1));
+    }
+
+    /** 并发测试各镜像源下载速度（MB/s）；回调时已更新 bestMirrorIdx 为最快源。 */
+    public static void testSpeeds(final Runnable onFail, final SpeedListener listener) {
+        exec.execute(() -> {
+            final int n = MIRROR_PREFIXES.length;
+            final float[] mbps = new float[n];
+            final boolean[] done = new boolean[n];
+            final java.util.concurrent.CountDownLatch latch = new java.util.concurrent.CountDownLatch(n);
+            for (int i = 0; i < n; i++) {
+                final int idx = i;
+                new Thread(() -> {
+                    mbps[idx] = measureSpeed(MIRROR_PREFIXES[idx] + SPEED_BASE);
+                    done[idx] = true;
+                    latch.countDown();
+                }).start();
+            }
+            try {
+                // 单个源连接上限 10s，整体最多等待 12s
+                latch.await(12, java.util.concurrent.TimeUnit.SECONDS);
+            } catch (InterruptedException ignored) { }
+
+            int best = 0;
+            for (int i = 1; i < n; i++) {
+                if (mbps[i] > mbps[best]) best = i;
+            }
+            // 全部失败时保持原缓存
+            boolean any = false;
+            for (boolean d : done) if (d) { any = true; break; }
+            if (any) bestMirrorIdx = best;
+
+            final float[] speeds = mbps.clone();
+            final int bestIdx = best;
+            final boolean success = any;
+            main.post(() -> {
+                if (success && listener != null) listener.onResult(speeds, bestIdx);
+                else if (onFail != null) onFail.run();
+            });
+        });
+    }
+
+    /** 测量单源速度：读取 SPEED_READ_BYTES 字节计时，返回 MB/s；失败返回 0。 */
+    private static float measureSpeed(String urlStr) {
+        HttpURLConnection conn = null;
+        InputStream in = null;
+        try {
+            conn = open(urlStr);
+            in = conn.getInputStream();
+            final byte[] buf = new byte[8192];
+            long start = System.currentTimeMillis();
+            long read = 0;
+            int r;
+            while (read < SPEED_READ_BYTES && (r = in.read(buf, 0, (int) Math.min(buf.length, SPEED_READ_BYTES - read))) != -1) {
+                read += r;
+            }
+            long ms = System.currentTimeMillis() - start;
+            if (ms <= 0) ms = 1;
+            if (read <= 0) return 0f;
+            return read / 1048576f / (ms / 1000f);
+        } catch (Throwable t) {
+            return 0f;
+        } finally {
+            try { if (in != null) in.close(); } catch (Exception ignored) { }
+            if (conn != null) conn.disconnect();
+        }
+    }
 
     /** 后台下载并实时回调进度。 */
     private static void downloadRun(final Activity act, final String baseUrl,
@@ -302,5 +402,10 @@ public final class UpdateChecker {
     /** 回调：isLatest=true 表示已是最新。 */
     public interface UpdateListener {
         void onResult(String versionName, String changeLog, String apkUrl, boolean isLatest);
+    }
+
+    /** 测速回调：speeds 为各源速度（MB/s，失败为 0），bestIdx 为最快源下标。 */
+    public interface SpeedListener {
+        void onResult(float[] speeds, int bestIdx);
     }
 }

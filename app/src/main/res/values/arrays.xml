@@ -48,4 +48,17 @@
         <item>1</item>
         <item>2</item>
     </string-array>
+
+    <string-array name="mirror_entries">
+        <item>@string/mirror_auto</item>
+        <item>@string/mirror_direct</item>
+        <item>@string/mirror_ghproxy</item>
+        <item>@string/mirror_ghproxy_net</item>
+    </string-array>
+    <string-array name="mirror_values">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+    </string-array>
 </resources>

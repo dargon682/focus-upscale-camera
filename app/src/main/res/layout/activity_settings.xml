@@ -225,6 +225,40 @@
                 android:textSize="14sp"
                 android:textStyle="bold" />
 
+            <!-- 下载镜像源选择 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/spacing_s"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/lbl_mirror"
+                    android:textColor="@color/text_primary"
+                    android:textSize="15sp" />
+
+                <Spinner
+                    android:id="@+id/spMirror"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1" />
+            </LinearLayout>
+
+            <Button
+                android:id="@+id/btnTestSpeed"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/spacing_s"
+                android:background="@drawable/bg_capsule"
+                android:minHeight="48dp"
+                android:paddingStart="@dimen/spacing_m"
+                android:paddingEnd="@dimen/spacing_m"
+                android:text="@string/btn_test_speed"
+                android:textColor="@color/text_primary" />
+
             <Button
                 android:id="@+id/btnCheckUpdate"
                 android:layout_width="match_parent"

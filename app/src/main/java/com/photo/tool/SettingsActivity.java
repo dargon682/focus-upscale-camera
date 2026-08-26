@@ -1,6 +1,7 @@
 package com.photo.tool;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.AdapterView;
@@ -42,6 +43,11 @@ public class SettingsActivity extends Activity {
                 Prefs.quality(this), v -> Prefs.putQuality(this, v.intValue()));
         setupSpinner(R.id.spGrid, R.array.grid_entries, R.array.grid_values,
                 Prefs.gridStyle(this), v -> Prefs.putGridStyle(this, v.intValue()));
+        setupSpinner(R.id.spMirror, R.array.mirror_entries, R.array.mirror_values,
+                Prefs.downloadMirror(this), v -> Prefs.putDownloadMirror(this, v.intValue()));
+
+        Button btnTestSpeed = findViewById(R.id.btnTestSpeed);
+        btnTestSpeed.setOnClickListener(v -> testSpeed());
 
         Button btnCheckUpdate = findViewById(R.id.btnCheckUpdate);
         btnCheckUpdate.setOnClickListener(v -> checkUpdate());
@@ -68,6 +74,42 @@ public class SettingsActivity extends Activity {
             } else {
                 UpdateChecker.prompt(this, versionName, apkUrl, changeLog);
             }
+        });
+    }
+
+    /** 测试各镜像源下载速度：自动选中最快源并更新下拉框与设置。 */
+    private void testSpeed() {
+        Button b = findViewById(R.id.btnTestSpeed);
+        b.setEnabled(false);
+        String orig = b.getText().toString();
+        b.setText(R.string.speed_testing);
+        UpdateChecker.testSpeeds(() -> runOnUiThread(() -> {
+            b.setEnabled(true);
+            b.setText(orig);
+            Toast.makeText(this, R.string.speed_test_fail, Toast.LENGTH_LONG).show();
+        }), (speeds, bestIdxFound) -> {
+            b.setEnabled(true);
+            b.setText(orig);
+            // 自动切换到最快源（设置模式置为“自动”）
+            Prefs.putDownloadMirror(this, 0);
+            Spinner spMirror = findViewById(R.id.spMirror);
+            spMirror.setSelection(0);
+
+            StringBuilder sb = new StringBuilder();
+            String[] names = getResources().getStringArray(R.array.mirror_entries);
+            for (int i = 0; i < UpdateChecker.MIRROR_NAMES.length; i++) {
+                sb.append(UpdateChecker.MIRROR_NAMES[i])
+                        .append("：")
+                        .append(speeds[i] > 0 ? String.format(java.util.Locale.US, "%.2f MB/s", speeds[i]) : "不可用")
+                        .append("\n");
+            }
+            sb.append("\n").append(getString(R.string.speed_best,
+                    UpdateChecker.MIRROR_NAMES[UpdateChecker.effectiveMirrorIndex(0)]));
+            new AlertDialog.Builder(this)
+                    .setTitle(R.string.speed_result_title)
+                    .setMessage(sb.toString().trim())
+                    .setPositiveButton(android.R.string.ok, null)
+                    .show();
         });
     }
 

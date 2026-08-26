@@ -67,6 +67,16 @@
     <string name="upd_cancelled">下载已取消</string>
     <string name="upd_download_fail">下载失败</string>
     <string name="upd_install_fail">无法打开安装包</string>
+    <string name="lbl_mirror">下载镜像源</string>
+    <string name="mirror_auto">自动（测速选取最快）</string>
+    <string name="mirror_direct">GitHub 直连</string>
+    <string name="mirror_ghproxy">gh-proxy.com 加速镜像</string>
+    <string name="mirror_ghproxy_net">ghproxy.net 加速镜像</string>
+    <string name="btn_test_speed">测试各源下载速度</string>
+    <string name="speed_testing">正在测试各源下载速度…</string>
+    <string name="speed_test_fail">测速失败，可能网络不通</string>
+    <string name="speed_result_title">各镜像源下载速度</string>
+    <string name="speed_best">最快：%1$s（已自动选中）</string>
 
     <!-- 相册页 -->
     <string name="gallery_title">历史相册</string>
