@@ -18,8 +18,8 @@ android {
         minSdkVersion 24
         // 目标系统降至 Android 13 (API 33)，扩大机型兼容范围
         targetSdkVersion 33
-        versionCode 18
-        versionName "0.8.11"
+        versionCode 19
+        versionName "0.8.20"
     }
 
     buildFeatures {

@@ -1,8 +1,8 @@
 {
-  "versionCode": 18,
-  "versionName": "0.8.11",
+  "versionCode": 19,
+  "versionName": "0.8.20",
   "channel": "beta",
-  "apkUrl": "https://raw.githubusercontent.com/dargon682/focus-upscale-camera/main/apk/photo-tool-v0.8.11.apk",
-  "sha256": "7c2001bcd1f9d58076591476d8d6c4d994d1263182ad0f0ae68708730805f722",
-  "changelog": "启动器性能优化：CameraX 实例预热并行初始化、最近缩略图位图解码移出主线程，冷启动与界面恢复更流畅；前端0.8.10重设计与下载崩溃兜底同步保留。"
+  "apkUrl": "https://raw.githubusercontent.com/dargon682/focus-upscale-camera/main/apk/photo-tool-v0.8.20.apk",
+  "sha256": "8a7b294f019de66163d9352cd89115887331b19e9c1c81e717dfdca360a92136",
+  "changelog": "下载体验优化：通知栏新增「取消下载」按钮免回应用即中止下载，下载完成通知可一键直达系统安装器；并保留前端重设计、下载崩溃兜底与启动器性能优化。"
 }

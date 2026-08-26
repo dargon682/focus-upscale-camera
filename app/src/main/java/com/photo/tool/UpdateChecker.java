@@ -260,6 +260,11 @@ public final class UpdateChecker {
     /** 取消下载标记。 */
     private static final AtomicBoolean currentCancel = new AtomicBoolean(false);
 
+    /** 请求取消当前下载（通知栏「取消」动作 / 对话框取消共用）。 */
+    public static void cancelCurrent() {
+        currentCancel.set(true);
+    }
+
     /** 根据设置模式解析最终镜像前缀：0 自动（取测速缓存的最快源）/ 1~3 手动。 */
     static String resolveMirrorPrefix(int mode) {
         int idx;
@@ -410,7 +415,7 @@ public final class UpdateChecker {
                 main.post(() -> {
                     try {
                         final DownloadService dsDone = DownloadService.running;
-                        if (dsDone != null) dsDone.doneNotify();
+                        if (dsDone != null) dsDone.doneNotify(downloaded);
                         if (dialog != null && dialog.isShowing()) dialog.dismiss();
                         installApk(act, downloaded);
                     } catch (Throwable t) {
