@@ -30,6 +30,10 @@
     <string name="btn_timer_3">延时 3s</string>
     <string name="btn_timer_5">延时 5s</string>
     <string name="btn_timer_10">延时 10s</string>
+    <string name="btn_frames_5">FL 5F</string>
+    <string name="btn_frames_7">FL 7F</string>
+    <string name="btn_frames_9">FL 9F</string>
+    <string name="btn_frames_desc">超分取帧数</string>
     <string name="lock_focus">已锁定对焦与曝光（支持长按预览触发）</string>
     <string name="timer_countdown">%1$d 秒后拍摄…</string>
 

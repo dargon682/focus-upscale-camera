@@ -67,7 +67,7 @@ public class CameraActivity extends Activity implements LifecycleOwner, SensorEv
 
     private PreviewView previewView;
     private AidOverlayView aidOverlay;
-    private Button btnEv, btnTimer, btnFlash, btnSwitchCamera, btnSettings, btnGallery, btnCancel;
+    private Button btnEv, btnTimer, btnFlash, btnSwitchCamera, btnSettings, btnGallery, btnCancel, btnFrames;
     private Button btnModePhoto, btnModeSuper;
     private FrameLayout btnShutter;
     private FrameLayout imgRecent;
@@ -121,6 +121,9 @@ public class CameraActivity extends Activity implements LifecycleOwner, SensorEv
     private int evIdx = 0;
     /** 定时自拍延时（秒），0 = 关闭 */
     private int timerDelaySec = 0;
+    /** 超分取帧数快捷挡位：取帧数越多信噪比越高（更稳），合成耗时略增。 */
+    private static final int[] FRAME_VALUES = {7, 5, 9};
+    private int framesIdx = 1;
     private static final int[] TIMER_VALUES = {0, 3, 5, 10};
     private int timerIdx = 0;
     /** 倒计时任务序号，避免多次计时交错 */
@@ -145,6 +148,7 @@ public class CameraActivity extends Activity implements LifecycleOwner, SensorEv
         btnModeSuper = findViewById(R.id.btnModeSuper);
         btnShutter = findViewById(R.id.btnShutter);
         btnCancel = findViewById(R.id.btnCancel);
+        btnFrames = findViewById(R.id.btnFrames);
         imgRecent = findViewById(R.id.imgRecent);
         imgRecentThumb = findViewById(R.id.imgRecentThumb);
         tvStatus = findViewById(R.id.tvStatus);
@@ -184,6 +188,8 @@ public class CameraActivity extends Activity implements LifecycleOwner, SensorEv
         btnCancel.setVisibility(View.GONE);
         btnEv.setOnClickListener(v -> cycleEv());
         btnTimer.setOnClickListener(v -> cycleTimer());
+        btnFrames.setOnClickListener(v -> cycleFrames());
+        syncFramesButton();
 
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
@@ -365,6 +371,33 @@ public class CameraActivity extends Activity implements LifecycleOwner, SensorEv
             case 5: return getString(R.string.btn_timer_5);
             case 10: return getString(R.string.btn_timer_10);
             default: return getString(R.string.btn_timer_off);
+        }
+    }
+
+    // ---------- 超分取帧数快捷挡 ----------
+
+    private void cycleFrames() {
+        framesIdx = (framesIdx + 1) % FRAME_VALUES.length;
+        Prefs.putFrames(this, FRAME_VALUES[framesIdx]);
+        syncFramesButton();
+        Toast.makeText(this, framesLabel(), Toast.LENGTH_SHORT).show();
+    }
+
+    private void syncFramesButton() {
+        // 与持久化存储当前值对齐（应用启动时从 Prefs 读取）
+        int saved = Prefs.frames(this);
+        framesIdx = 1; // 默认 7 的位置
+        for (int i = 0; i < FRAME_VALUES.length; i++) {
+            if (FRAME_VALUES[i] == saved) { framesIdx = i; break; }
+        }
+        btnFrames.setText(framesLabel());
+    }
+
+    private String framesLabel() {
+        switch (FRAME_VALUES[framesIdx]) {
+            case 5: return getString(R.string.btn_frames_5);
+            case 9: return getString(R.string.btn_frames_9);
+            default: return getString(R.string.btn_frames_7);
         }
     }
 

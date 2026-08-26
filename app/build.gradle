@@ -16,9 +16,10 @@ android {
     defaultConfig {
         applicationId 'com.photo.tool'
         minSdkVersion 24
-        targetSdkVersion 36
-        versionCode 13
-        versionName "0.6.32"
+        // 目标系统降至 Android 13 (API 33)，扩大机型兼容范围
+        targetSdkVersion 33
+        versionCode 14
+        versionName "0.7.00-BATA"
     }
 
     buildFeatures {

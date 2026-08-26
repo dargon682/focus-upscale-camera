@@ -27,6 +27,8 @@
 - **检查更新**：设置页「检查更新」从 GitHub（多镜像源自动回退）拉取 `version.json`，有新版本即以**应用内对话框 + 实时进度条**下载，可选用 **GitHub 直连 / gh-proxy / ghproxy 加速镜像**，下载完成自动引导安装。
 - **镜像源自动测速**：设置页「测试各源下载速度」并发测速三个源，自动选用最快的源下载；也可手动指定镜像源。测速详情见 `TESTING.md`。
 - **相册保存**：结果以 PNG 写入系统相册 `Pictures/FocusUpscale` 目录（Android 10+ 走 MediaStore，无需存储权限）。
+- **超分取帧数快捷挡位（0.7.00）**：快门左侧新增 `FL 5F/7F/9F` 按钮，点击循环切换超分辨率的取帧数（帧数越多信噪比越高、越稳，耗时略增），选择即时持久化并作用于下次超分拍摄。
+- **目标系统降至 Android 13（0.7.00）**：`targetSdk` 36→33（API 33），在保留全部功能的同时扩大低版本机型兼容范围。
 
 ## 技术栈
 
@@ -37,6 +39,7 @@
 | UI | 原生 View + XML 布局（无 AppCompat 依赖，自实现 `LifecycleOwner`） |
 | 构建 | Gradle 8.14.3 + Android Gradle Plugin |
 | 最低系统 | Android 7.0（minSdk 24） |
+| 目标系统 | Android 13（targetSdk 33），兼容机型范围广 |
 
 ## 项目结构
 

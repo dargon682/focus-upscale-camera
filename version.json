@@ -1,6 +1,6 @@
 {
-  "versionCode": 13,
-  "versionName": "0.6.32",
-  "apkUrl": "https://raw.githubusercontent.com/dargon682/focus-upscale-camera/main/apk/photo-tool-v0.6.32.apk",
-  "changelog": "修复升级时无法打开安装包：安装前检测“安装未知应用”授权，未授权自动引导开启；以 ACTION_INSTALL_PACKAGE 为主、ACTION_VIEW 回退，提高安装成功率。"
+  "versionCode": 14,
+  "versionName": "0.7.00-BATA",
+  "apkUrl": "https://raw.githubusercontent.com/dargon682/focus-upscale-camera/main/apk/photo-tool-v0.7.00-BATA.apk",
+  "changelog": "目标系统降至 Android 13 (API 33)，扩大机型兼容；新增超分取帧数快捷挡位（FL 5F/7F/9F）。"
 }
