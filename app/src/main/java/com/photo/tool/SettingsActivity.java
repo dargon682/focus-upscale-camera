@@ -9,6 +9,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
 /** 设置页：各功能开关与超分参数。 */
@@ -16,6 +17,7 @@ public class SettingsActivity extends Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        setTheme(ThemeManager.res(this));    // 主题插件换肤（须在 super 前）
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
 
@@ -118,6 +120,52 @@ public class SettingsActivity extends Activity {
 
     private void buildFilterPlugins() {
         LinearLayout container = findViewById(R.id.filterPlugins);
+
+        // 功能插件开关
+        for (FeaturePlugin fp : PluginRegistry.features()) {
+            SettingRow row = new SettingRow(this, null);
+            row.setLabel(fp.name())
+                    .setChecked(Prefs.pluginOn(this, fp.id()))
+                    .setOnToggled((b, on) -> Prefs.putPluginOn(this, fp.id(), on));
+            container.addView(row,
+                    new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
+                            LinearLayout.LayoutParams.WRAP_CONTENT));
+        }
+
+        // 主题插件单选
+        LinearLayout themeRow = new LinearLayout(this);
+        themeRow.setOrientation(LinearLayout.HORIZONTAL);
+        TextView tl = new TextView(this);
+        tl.setText(getString(R.string.lbl_theme));
+        tl.setTextColor(ThemeManager.color(this, R.attr.tokTextPrimary));
+        tl.setTextSize(14);
+        themeRow.addView(tl, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+
+        for (ThemePlugin tp : PluginRegistry.themes()) {
+            Button b = new Button(this);
+            b.setText(tp.name());
+            b.setAllCaps(true);
+            boolean sel = tp.id().equals(ThemeManager.current(this).id());
+            styleThemeBtn(b, sel);
+            b.setOnClickListener(v -> {
+                if (ThemeManager.apply(this, tp.id())) recreate();   // 换肤后重建界面
+            });
+            themeRow.addView(b, new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+        }
+        container.addView(themeRow,
+                new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
+                        LinearLayout.LayoutParams.WRAP_CONTENT));
+
+        // 滤镜插件开关
+        TextView fh = new TextView(this);
+        fh.setText(getString(R.string.filter_title));
+        fh.setTextColor(ThemeManager.color(this, R.attr.tokTextSecondary));
+        fh.setTextSize(12);
+        fh.setPadding(0, dp(10), 0, dp(4));
+        container.addView(fh, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT));
+
         for (FilterPlugin p : FilterPluginRegistry.all()) {
             if (p.isNone()) continue;                // 无滤镜不可关闭
             SettingRow row = new SettingRow(this, null);
@@ -128,6 +176,19 @@ public class SettingsActivity extends Activity {
                     new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
                             LinearLayout.LayoutParams.WRAP_CONTENT));
         }
+    }
+
+    private void styleThemeBtn(Button b, boolean selected) {
+        b.setTextColor(selected
+                ? ThemeManager.color(this, R.attr.tokTextOnAccent)
+                : ThemeManager.color(this, R.attr.tokTextPrimary));
+        b.setBackgroundColor(selected
+                ? ThemeManager.color(this, R.attr.tokAccent)
+                : ThemeManager.color(this, R.attr.tokCardBg));
+    }
+
+    private int dp(float v) {
+        return Math.round(getResources().getDisplayMetrics().density * v);
     }
 
     /** 用 entries + values 填充 Spinner，并让初值命中当前设置。 */

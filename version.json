@@ -1,8 +1,8 @@
 {
-  "versionCode": 20,
-  "versionName": "0.8.30",
+  "versionCode": 21,
+  "versionName": "0.8.40",
   "channel": "beta",
-  "apkUrl": "https://raw.githubusercontent.com/dargon682/focus-upscale-camera/main/apk/photo-tool-v0.8.30.apk",
-  "sha256": "efe384e2c14842b1c80c8dd7fa2ed09e373ab3e57e77f7e8d1f249c7ab31929d",
-  "changelog": "新增滤镜插件系统：内置滤黑白、复古、冷色、暖色、柔和、鲜艳六款一键特效，结果页可即时切换应用，可在设置页灵活开关；接入说明见 docs/PLUGIN.md。"
+  "apkUrl": "https://raw.githubusercontent.com/dargon682/focus-upscale-camera/main/apk/photo-tool-v0.8.40.apk",
+  "sha256": "560579fedf14d563e248a217313ad15cacd0456df65cff823750da5054734ba4",
+  "changelog": "全方面插件系统升级：统一滤镜、功能、主题三类插件；新增日期水印功能插件与亮色/暗色全局主题换肤（设置页可切换并即时生效）；接入文档见 docs/PLUGIN.md。"
 }

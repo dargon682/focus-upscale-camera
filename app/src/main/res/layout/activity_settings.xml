@@ -2,7 +2,7 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/bg_deep"
+    android:background="?attr/tokWindowBg"
     android:fillViewport="true">
 
     <LinearLayout
@@ -18,7 +18,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/settings_title"
-            android:textColor="@color/text_primary"
+            android:textColor="?attr/tokTextPrimary"
             android:textSize="20sp"
             android:textStyle="bold" />
 
@@ -27,7 +27,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/spacing_xs"
             android:text="@string/settings_subtitle"
-            android:textColor="@color/text_secondary"
+            android:textColor="?attr/tokTextSecondary"
             android:textSize="13sp" />
 
         <!-- 卡片1：取景辅助 -->
@@ -43,7 +43,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/section_overlay"
-                android:textColor="@color/text_primary"
+                android:textColor="?attr/tokTextPrimary"
                 android:textSize="14sp"
                 android:textStyle="bold" />
 
@@ -57,7 +57,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
                 android:layout_marginTop="@dimen/spacing_s"
-                android:background="@color/divider" />
+                android:background="?attr/tokDivider" />
 
             <com.photo.tool.SettingRow
                 android:id="@+id/rowLevel"
@@ -69,7 +69,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
                 android:layout_marginTop="@dimen/spacing_s"
-                android:background="@color/divider" />
+                android:background="?attr/tokDivider" />
 
             <com.photo.tool.SettingRow
                 android:id="@+id/rowCompare"
@@ -81,7 +81,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
                 android:layout_marginTop="@dimen/spacing_s"
-                android:background="@color/divider" />
+                android:background="?attr/tokDivider" />
 
             <!-- 网格样式选择 -->
             <LinearLayout
@@ -95,7 +95,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:text="@string/lbl_grid_style"
-                    android:textColor="@color/text_primary"
+                    android:textColor="?attr/tokTextPrimary"
                     android:textSize="15sp" />
 
                 <Spinner
@@ -119,7 +119,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/section_super"
-                android:textColor="@color/text_primary"
+                android:textColor="?attr/tokTextPrimary"
                 android:textSize="14sp"
                 android:textStyle="bold" />
 
@@ -134,7 +134,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:text="@string/lbl_scale"
-                    android:textColor="@color/text_primary"
+                    android:textColor="?attr/tokTextPrimary"
                     android:textSize="15sp" />
 
                 <Spinner
@@ -155,7 +155,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:text="@string/lbl_frames"
-                    android:textColor="@color/text_primary"
+                    android:textColor="?attr/tokTextPrimary"
                     android:textSize="15sp" />
 
                 <Spinner
@@ -176,7 +176,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:text="@string/lbl_sharpen"
-                    android:textColor="@color/text_primary"
+                    android:textColor="?attr/tokTextPrimary"
                     android:textSize="15sp" />
 
                 <Spinner
@@ -197,7 +197,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:text="@string/lbl_quality"
-                    android:textColor="@color/text_primary"
+                    android:textColor="?attr/tokTextPrimary"
                     android:textSize="15sp" />
 
                 <Spinner
@@ -221,7 +221,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/section_filters"
-                android:textColor="@color/text_primary"
+                android:textColor="?attr/tokTextPrimary"
                 android:textSize="14sp"
                 android:textStyle="bold" />
 
@@ -230,7 +230,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/spacing_xxs"
                 android:text="@string/filter_plugin_desc"
-                android:textColor="@color/text_secondary"
+                android:textColor="?attr/tokTextSecondary"
                 android:textSize="12sp" />
 
             <LinearLayout
@@ -254,7 +254,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/section_update"
-                android:textColor="@color/text_primary"
+                android:textColor="?attr/tokTextPrimary"
                 android:textSize="14sp"
                 android:textStyle="bold" />
 
@@ -270,7 +270,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:text="@string/lbl_mirror"
-                    android:textColor="@color/text_primary"
+                    android:textColor="?attr/tokTextPrimary"
                     android:textSize="15sp" />
 
                 <Spinner
@@ -290,7 +290,7 @@
                 android:paddingStart="@dimen/spacing_m"
                 android:paddingEnd="@dimen/spacing_m"
                 android:text="@string/btn_test_speed"
-                android:textColor="@color/text_primary" />
+                android:textColor="?attr/tokTextPrimary" />
 
             <Button
                 android:id="@+id/btnCheckUpdate"
@@ -302,7 +302,7 @@
                 android:paddingStart="@dimen/spacing_m"
                 android:paddingEnd="@dimen/spacing_m"
                 android:text="@string/btn_check_update"
-                android:textColor="@color/text_on_accent"
+                android:textColor="?attr/tokTextOnAccent"
                 android:textStyle="bold" />
 
             <Button
@@ -315,7 +315,7 @@
                 android:paddingStart="@dimen/spacing_m"
                 android:paddingEnd="@dimen/spacing_m"
                 android:text="@string/btn_back"
-                android:textColor="@color/text_primary" />
+                android:textColor="?attr/tokTextPrimary" />
         </LinearLayout>
     </LinearLayout>
 </ScrollView>

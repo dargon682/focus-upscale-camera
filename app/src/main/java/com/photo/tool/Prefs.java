@@ -56,6 +56,15 @@ public final class Prefs {
         sp(c).edit().putString("current_filter", id == null ? "none" : id).apply();
     }
 
+    // ---- 主题 ----
+    /** 当前主题插件 id（默认暗色）。 */
+    public static String themeId(Context c) {
+        return sp(c).getString("theme_id", "theme_dark");
+    }
+    public static void putThemeId(Context c, String id) {
+        sp(c).edit().putString("theme_id", id == null ? "theme_dark" : id).apply();
+    }
+
     // ---- 写入 ----
     public static void putGrid(Context c, boolean v)   { sp(c).edit().putBoolean("grid", v).apply(); }
     public static void putLevel(Context c, boolean v)  { sp(c).edit().putBoolean("level", v).apply(); }

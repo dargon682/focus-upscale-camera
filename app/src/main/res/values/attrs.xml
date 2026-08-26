@@ -1,0 +1,14 @@
+<resources>
+    <!-- ═ 全方面插件系统 · 主题 Token ═
+         布局与代码统一通过 ?attr/tokXxx 引用主题变量，
+         由各主题 Style 赋值，实现一键全局换肤（经典亮色 / 暗色）。 -->
+    <attr name="tokWindowBg" format="color" />        <!-- 页面根背景 -->
+    <attr name="tokCardBg" format="color" />          <!-- 卡片/面板背景 -->
+    <attr name="tokTextPrimary" format="color" />     <!-- 主文本 -->
+    <attr name="tokTextSecondary" format="color" />   <!-- 次要文本 -->
+    <attr name="tokTextOnAccent" format="color" />    <!-- 强调底之上的文本 -->
+    <attr name="tokDivider" format="color" />         <!-- 分隔线 -->
+    <attr name="tokAccent" format="color" />          <!-- 主强调色 -->
+    <attr name="tokAccentSoft" format="color" />      <!-- 强调色半透底 -->
+    <attr name="tokDanger" format="color" />          <!-- 危险/警示 -->
+</resources>

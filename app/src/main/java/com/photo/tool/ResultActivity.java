@@ -47,6 +47,7 @@ public class ResultActivity extends Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        setTheme(ThemeManager.res(this));    // 主题插件换肤（须在 super 前）
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_result);
 
@@ -144,8 +145,12 @@ public class ResultActivity extends Activity {
     }
 
     private void styleChip(TextView chip, boolean selected) {
-        chip.setTextColor(selected ? getColor(R.color.text_on_accent) : getColor(R.color.text_primary));
-        chip.setBackgroundColor(selected ? getColor(R.color.accent) : getColor(R.color.bg_card));
+        chip.setTextColor(selected
+                ? ThemeManager.color(this, R.attr.tokTextOnAccent)
+                : ThemeManager.color(this, R.attr.tokTextPrimary));
+        chip.setBackgroundColor(selected
+                ? ThemeManager.color(this, R.attr.tokAccent)
+                : ThemeManager.color(this, R.attr.tokCardBg));
     }
 
     /** 在后台线程对原始超分 baseSuper 应用滤镜，完成后替换当前 image 并刷新对比视图。 */
@@ -229,9 +234,17 @@ public class ResultActivity extends Activity {
             if (uri == null) throw new Exception("insert failed");
             OutputStream os = getContentResolver().openOutputStream(uri);
             if (os == null) throw new Exception("open failed");
-            image.compress(Bitmap.CompressFormat.PNG, 100, os);
+            // 功能插件钩子：日期水印等功能在此对落盘位图做后处理
+            Bitmap toSave = image;
+            for (FeaturePlugin fp : PluginRegistry.features()) {
+                toSave = fp.onSave(toSave, this);
+            }
+            toSave.compress(Bitmap.CompressFormat.PNG, 100, os);
             os.flush();
             os.close();
+            if (toSave != image) {                    // 插件返回了新位图，写入后回收
+                toSave.recycle();
+            }
 
             values.clear();
             values.put(MediaStore.Images.Media.IS_PENDING, 0);

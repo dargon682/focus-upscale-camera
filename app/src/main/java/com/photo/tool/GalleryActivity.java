@@ -55,6 +55,7 @@ public class GalleryActivity extends Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        setTheme(ThemeManager.res(this));    // 主题插件换肤（须在 super 前）
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_gallery);
 

@@ -1,5 +1,5 @@
 <resources>
-    <!-- 专业数码后背主题：深色机体 + 琥珀强调，M3 分层曲面 -->
+    <!-- 主题插件 · 暗色（默认，专业数码后背） -->
     <style name="AppTheme" parent="android:Theme.Black.NoTitleBar.Fullscreen">
         <item name="android:statusBarColor">@color/bg_deep</item>
         <item name="android:navigationBarColor">@color/bg_deep</item>
@@ -8,5 +8,36 @@
         <item name="android:windowLightStatusBar">false</item>
         <item name="android:windowLightNavigationBar">false</item>
         <item name="android:windowActionModeOverlay">true</item>
+
+        <item name="tokWindowBg">@color/bg_deep</item>
+        <item name="tokCardBg">@color/bg_card</item>
+        <item name="tokTextPrimary">@color/text_primary</item>
+        <item name="tokTextSecondary">@color/text_secondary</item>
+        <item name="tokTextOnAccent">@color/text_on_accent</item>
+        <item name="tokDivider">@color/divider</item>
+        <item name="tokAccent">@color/accent</item>
+        <item name="tokAccentSoft">@color/accent_soft</item>
+        <item name="tokDanger">@color/danger</item>
+    </style>
+
+    <!-- 主题插件 · 亮色（经典浅色管理界面） -->
+    <style name="AppThemeLight" parent="android:Theme.Light.NoTitleBar.Fullscreen">
+        <item name="android:statusBarColor">#F4F5F7</item>
+        <item name="android:navigationBarColor">#F4F5F7</item>
+        <item name="android:windowBackground">#F4F5F7</item>
+        <item name="android:colorAccent">#B8860B</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar">true</item>
+        <item name="android:windowActionModeOverlay">true</item>
+
+        <item name="tokWindowBg">#F4F5F7</item>
+        <item name="tokCardBg">#FFFFFFFF</item>
+        <item name="tokTextPrimary">#1A1C21</item>
+        <item name="tokTextSecondary">#5C6068</item>
+        <item name="tokTextOnAccent">#FFFFFFFF</item>
+        <item name="tokDivider">#E2E4EA</item>
+        <item name="tokAccent">#B8860B</item>
+        <item name="tokAccentSoft">#1AB8860B</item>
+        <item name="tokDanger">#C62828</item>
     </style>
 </resources>

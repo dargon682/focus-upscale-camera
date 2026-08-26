@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="@color/bg_deep"
+    android:background="?attr/tokWindowBg"
     android:padding="@dimen/spacing_l">
 
     <!-- 顶栏 -->
@@ -24,7 +24,7 @@
             android:paddingStart="@dimen/spacing_m"
             android:paddingEnd="@dimen/spacing_m"
             android:text="@string/btn_back"
-            android:textColor="@color/text_primary" />
+            android:textColor="?attr/tokTextPrimary" />
 
         <TextView
             android:layout_width="0dp"
@@ -32,7 +32,7 @@
             android:layout_weight="1"
             android:gravity="center"
             android:text="@string/gallery_title"
-            android:textColor="@color/text_primary"
+            android:textColor="?attr/tokTextPrimary"
             android:textSize="18sp"
             android:textStyle="bold" />
     </LinearLayout>
@@ -55,7 +55,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:text="@string/gallery_empty"
-        android:textColor="@color/text_secondary"
+        android:textColor="?attr/tokTextSecondary"
         android:textSize="15sp"
         android:visibility="gone" />
 </LinearLayout>

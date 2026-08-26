@@ -3,12 +3,8 @@ package com.photo.tool;
 import android.graphics.Bitmap;
 
 /**
- * 滤镜插件抽象。任何图标级可扩展的滤镜/特效处理器都应继承本类并实现三个抽象方法：
- * <ul>
- *   <li>{@link #id()}：全局唯一的插件标识（建议小写下划线命名，用于持久化开关）。</li>
- *   <li>{@link #name()}：展示名称（展示给用户，无需唯一）。</li>
- *   <li>{@link #apply(Bitmap)}：对输入位图执行一次滤镜，返回处理后的位图。</li>
- * </ul>
+ * 滤镜插件抽象，属于「全方面插件系统」的滤镜类别（{@link PluginKind#FILTER}）。
+ * 任何可扩展的滤镜/特效处理器都应继承本类并实现：{@link #id()}、{@link #name()}、{@link #apply(Bitmap)}。
  *
  * <p>接入新滤镜的完整步骤见仓库 {@code docs/PLUGIN.md}。约定：
  * <ul>
@@ -18,15 +14,22 @@ import android.graphics.Bitmap;
  *   <li>颜色处理应使用 {@link #pixels(Bitmap)} / {@link #put(Bitmap, int[])} 读取与回写 ARGB 数组。</li>
  * </ul>
  */
-public abstract class FilterPlugin {
+public abstract class FilterPlugin extends Plugin {
 
     /** 默认无滤镜标识。 */
     public static final String ID_NONE = "none";
 
+    @Override
+    public final PluginKind kind() {
+        return PluginKind.FILTER;
+    }
+
     /** 插件唯一标识。 */
+    @Override
     public abstract String id();
 
     /** 插件展示名称。 */
+    @Override
     public abstract String name();
 
     /**

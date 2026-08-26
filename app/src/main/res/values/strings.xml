@@ -100,8 +100,9 @@
     <!-- 滤镜插件 -->
     <string name="filter_title">滤镜插件</string>
     <string name="filter_processing">处理中…</string>
-    <string name="section_filters">滤镜插件（强大可扩展）</string>
-    <string name="filter_plugin_desc">启用后可在结果页选择并应用该滤镜特效</string>
+    <string name="section_filters">插件（滤镜 · 功能 · 主题）</string>
+    <string name="filter_plugin_desc">管理滤镜特效、功能扩展与界面主题，详见 docs/PLUGIN.md</string>
+    <string name="lbl_theme">界面主题</string>
 
     <!-- 相机新设计 -->
     <string name="mode_photo">拍照</string>
