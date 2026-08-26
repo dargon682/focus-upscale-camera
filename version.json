@@ -1,6 +1,6 @@
 {
-  "versionCode": 4,
-  "versionName": "2.1-BETA",
+  "versionCode": 5,
+  "versionName": "0.5.020",
   "apkUrl": "https://github.com/dargon682/focus-upscale-camera/releases/download/BETA/app-release-BETA.apk",
-  "changelog": "全新品牌与 UI 重写（全能相机）：新增拍摄模式、网格样式、最近照片缩略角标。"
+  "changelog": "新增超分连拍抖动提示（提升动态捕捉成片率）；优化双三次合成速度（减少堆分配）；取帧延迟降至 60ms。"
 }

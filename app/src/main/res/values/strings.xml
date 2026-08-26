@@ -8,6 +8,7 @@
     <string name="btn_save">保存</string>
     <string name="hint_tap_focus">点按画面可二次对焦</string>
     <string name="status_super">正在捕捉多帧并合成…请保持手机稳定</string>
+    <string name="status_super_shaky">捕捉中 %1$d/%2$d · 请握稳相机</string>
     <string name="status_processing">合成中…</string>
 
     <!-- 顶部工具栏 -->

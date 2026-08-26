@@ -104,6 +104,14 @@ public class CameraActivity extends Activity implements LifecycleOwner, SensorEv
     private Sensor accelerometer;
     private boolean sensorRegistered = false;
 
+    /** 超分连拍稳定性辅助：实时抖动监测，提示用户握稳相机提升动态捕捉成片率。 */
+    private static final int SHAKE_WIN = 24;          // 加速度幅值采样窗
+    private static final float SHAKE_WARN_G = 1.4f;   // 抖动报警阈值（偏离重力的RMS偏差，单位 g）
+    private final float[] shakeSamples = new float[SHAKE_WIN];
+    private int shakeIdx = 0;
+    private int shakeCnt = 0;
+    private boolean stabilityForSuper = false;        // 超分连拍期间强制开启监测
+
     private boolean capturing = false;
     /** 连拍取消标记 */
     private boolean cancelRequested = false;
@@ -534,6 +542,9 @@ public class CameraActivity extends Activity implements LifecycleOwner, SensorEv
         btnCancel.setVisibility(View.VISIBLE);
         btnCancel.setEnabled(true);
 
+        stabilityForSuper = true;
+        registerSensorIfNeeded();
+
         final List<File> files = new ArrayList<>();
         final File dir = new File(getCacheDir(), "super");
         if (!dir.exists()) dir.mkdirs();
@@ -566,10 +577,13 @@ public class CameraActivity extends Activity implements LifecycleOwner, SensorEv
                     @Override
                     public void onImageSaved(@NonNull ImageCapture.OutputFileResults results) {
                         files.add(f);
-                        setStatus("捕捉中 " + files.size() + "/" + total);
-                        // 约 180ms 间隔，让手持微抖形成亚像素位移（为超分重建提供交错信息）
+                        // 抖动过大时提示用户握稳，提升配准成功率
+                        setStatus(currentShake() > SHAKE_WARN_G
+                                ? getString(R.string.status_super_shaky, files.size(), total)
+                                : "捕捉中 " + files.size() + "/" + total);
+                        // 60ms 间隔，提高取帧速度
                         mainHandler.postDelayed(() -> captureSeries(idx + 1, total, dir, files,
-                                scale, sharpen, sample), 180);
+                                scale, sharpen, sample), 60);
                     }
 
                     @Override
@@ -603,6 +617,8 @@ public class CameraActivity extends Activity implements LifecycleOwner, SensorEv
     private void finishSuperState() {
         capturing = false;
         cancelRequested = false;
+        stabilityForSuper = false;
+        releaseAccelIfIdle();
         btnShutter.setEnabled(true);
         btnCancel.setVisibility(View.GONE);
     }
@@ -773,6 +789,11 @@ public class CameraActivity extends Activity implements LifecycleOwner, SensorEv
             float gy = event.values[1];
             float tilt = (float) Math.toDegrees(Math.atan2(gx, -gy));
             aidOverlay.setTilt(tilt);
+            // 采集加速度幅值到环形缓冲，供超分连拍抖动监测使用
+            float gz = event.values[2];
+            shakeSamples[shakeIdx] = (float) Math.sqrt(gx * gx + gy * gy + gz * gz);
+            shakeIdx = (shakeIdx + 1) % SHAKE_WIN;
+            if (shakeCnt < SHAKE_WIN) shakeCnt++;
         }
     }
 
@@ -781,10 +802,34 @@ public class CameraActivity extends Activity implements LifecycleOwner, SensorEv
 
     private void registerSensorIfNeeded() {
         if (sensorRegistered) return;
-        if (Prefs.levelEnabled(this) && accelerometer != null) {
-            sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_UI);
+        // 水平仪开启 或 超分连拍进行中 时，都需要加速度计
+        if ((Prefs.levelEnabled(this) || stabilityForSuper) && accelerometer != null) {
+            // 连拍抖动监测需要较高采样率，统一用 GAME 档
+            sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_GAME);
             sensorRegistered = true;
+            shakeCnt = 0;
         }
+    }
+
+    /** 连拍结束后：若水平仪也已关闭，及时释放加速度计以省电。 */
+    private void releaseAccelIfIdle() {
+        if (sensorRegistered && !stabilityForSuper && !Prefs.levelEnabled(this)) {
+            sensorManager.unregisterListener(this);
+            sensorRegistered = false;
+        }
+    }
+
+    /** 最近抖动幅度（加速度幅值相对重力的 RMS 偏差，单位 g）；样本不足时返回 0。 */
+    private float currentShake() {
+        int n = Math.min(shakeCnt, SHAKE_WIN);
+        if (n < 8) return 0f;
+        float total = 0f;
+        for (int i = 0; i < n; i++) {
+            int idx = (shakeIdx - 1 - i + SHAKE_WIN) % SHAKE_WIN;
+            float d = shakeSamples[idx] - 9.8f;
+            total += d * d;
+        }
+        return (float) Math.sqrt(total / n);
     }
 
     private void unregisterSensor() {

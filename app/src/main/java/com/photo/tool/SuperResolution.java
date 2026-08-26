@@ -111,30 +111,30 @@ public final class SuperResolution {
         int y0 = (int) Math.floor(y);
         float fx = x - x0;
         float fy = y - y0;
-        float[] wex = cubicWeights(fx);
-        float[] wey = cubicWeights(fy);
+        // 复用调用栈上的权重数组，避免每像素堆分配（4x4 双三次合成是主要耗时点）
         float sum = 0f;
+        float t2 = fx * fx, t3 = t2 * fx;
+        float w0 = -0.5f * t3 + t2 - 0.5f * fx;
+        float w1 = 1.5f * t3 - 2.5f * t2 + 1f;
+        float w2 = -1.5f * t3 + 2f * t2 + 0.5f * fx;
+        float w3 = 0.5f * t3 - 0.5f * t2;
+        t2 = fy * fy; t3 = t2 * fy;
+        float v0 = -0.5f * t3 + t2 - 0.5f * fy;
+        float v1 = 1.5f * t3 - 2.5f * t2 + 1f;
+        float v2 = -1.5f * t3 + 2f * t2 + 0.5f * fy;
+        float v3 = 0.5f * t3 - 0.5f * t2;
         for (int j = 0; j < 4; j++) {
             int yy = Math.max(0, Math.min(h - 1, y0 - 1 + j));
+            float vy = j == 0 ? v0 : (j == 1 ? v1 : (j == 2 ? v2 : v3));
             float rowSum = 0f;
             for (int i = 0; i < 4; i++) {
                 int xx = Math.max(0, Math.min(w - 1, x0 - 1 + i));
-                rowSum += wex[i] * channel(pix[yy * w + xx], ch);
+                float wx = i == 0 ? w0 : (i == 1 ? w1 : (i == 2 ? w2 : w3));
+                rowSum += wx * channel(pix[yy * w + xx], ch);
             }
-            sum += wey[j] * rowSum;
+            sum += vy * rowSum;
         }
         return sum;
-    }
-
-    private static float[] cubicWeights(float t) {
-        float[] w = new float[4];
-        float t2 = t * t;
-        float t3 = t2 * t;
-        w[0] = -0.5f * t3 + t2 - 0.5f * t;
-        w[1] = 1.5f * t3 - 2.5f * t2 + 1f;
-        w[2] = -1.5f * t3 + 2f * t2 + 0.5f * t;
-        w[3] = 0.5f * t3 - 0.5f * t2;
-        return w;
     }
 
     private static int channel(int argb, char ch) {
