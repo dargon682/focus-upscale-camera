@@ -3,6 +3,6 @@
   "versionName": "0.8.00-BETA",
   "channel": "beta",
   "apkUrl": "https://raw.githubusercontent.com/dargon682/focus-upscale-camera/main/apk/photo-tool-v0.8.00-BETA.apk",
-  "sha256": "PENDING",
+  "sha256": "2fb6847a99d0b2e1ee8c9a318d2b45020c740cc8c0163fb3b92c7be2040dd56b",
   "changelog": "升级下载全面优化：断点续传、多线程分片、完整性+签名校验、指数退避重试、后台/通知栏下载、错误码诊断、Beta/稳定双通道、进度UI优化、更新后清理旧包。"
 }
