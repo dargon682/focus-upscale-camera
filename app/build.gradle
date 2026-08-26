@@ -4,12 +4,21 @@ android {
     namespace 'com.photo.tool'
     compileSdk 36
 
+    signingConfigs {
+        dargon {
+            storeFile file('../keystores/dargon.keystore')
+            storePassword 'DargonKeyStore2026'
+            keyAlias 'dargon'
+            keyPassword 'DargonKeyStore2026'
+        }
+    }
+
     defaultConfig {
         applicationId 'com.photo.tool'
         minSdkVersion 24
         targetSdkVersion 36
-        versionCode 8
-        versionName "0.6.000"
+        versionCode 9
+        versionName "0.6.100"
     }
 
     buildFeatures {
@@ -20,9 +29,13 @@ android {
         release {
             minifyEnabled true
             shrinkResources true
-            // 便于直接分发可安装的 release 包（同样使用 debug 签名，仅供测试分发）
-            signingConfig signingConfigs.debug
+            // 统一使用 Dargon 签名：相同签名 + 更高 versionCode 即可覆盖安装
+            signingConfig signingConfigs.dargon
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+        debug {
+            // 调试包同样统一为 Dargon 签名，保证覆盖升级不残留不同签名
+            signingConfig signingConfigs.dargon
         }
     }
 

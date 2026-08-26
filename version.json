@@ -1,6 +1,6 @@
 {
-  "versionCode": 8,
-  "versionName": "0.6.000",
+  "versionCode": 9,
+  "versionName": "0.6.100",
   "apkUrl": "https://github.com/dargon682/focus-upscale-camera/releases/download/BETA/app-release-BETA.apk",
-  "changelog": "前端整体重新设计为现代专业数码相机（cinematic MILC）风格：墨黑机体配色、琥珀机内 HUD 读数、机械滚花快门外观、四角琥珀对焦框、等宽参数排版、琥珀取景网格与配色体系全面深色统一。"
+  "changelog": "统一 APK 签名为 Dargon（固定密钥库），确保相同签名 + 更高版本号即可覆盖安装，无需卸载旧版。"
 }
