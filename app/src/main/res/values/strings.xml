@@ -106,4 +106,16 @@
     <string name="grid_golden">黄金分割</string>
     <string name="toast_saved">已保存到相册</string>
     <string name="hint_pinch">双指缩放·双击复位</string>
+
+    <!-- 前台下载服务 -->
+    <string name="dn_mirror_more_1">GitHub 加速讯迅</string>
+    <string name="dn_nc_title">正在下载更新</string>
+    <string name="dn_nc_done">下载完成，点击安装</string>
+    <string name="dn_perm_notif">请允许通知以显示下载进度</string>
+    <string name="dn_verify">正在校验安装包完整性…</string>
+    <string name="dn_sig_ok">签名校验通过</string>
+    <string name="dn_sig_fail">签名不一致，已丢弃，请重试</string>
+    <string name="dn_checksum_fail">文件损坏（校验不符），请重新下载</string>
+    <string name="dn_err_code">错误码 %1$s：%2$s</string>
+    <string name="dn_channel_beta">检测到测试通道更新。</string>
 </resources>

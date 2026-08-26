@@ -1,6 +1,8 @@
 {
-  "versionCode": 15,
-  "versionName": "0.7.00-BETA",
-  "apkUrl": "https://raw.githubusercontent.com/dargon682/focus-upscale-camera/main/apk/photo-tool-v0.7.00-BETA.apk",
-  "changelog": "修复升级时无法打开安装包：FileProvider 暴露路径与下载目录不匹配导致授权失败，已在 Android 10/13 实机复核通过。目标系统 Android 13，新增超分取帧数快捷挡（FL 5F/7F/9F）。"
+  "versionCode": 16,
+  "versionName": "0.8.00-BETA",
+  "channel": "beta",
+  "apkUrl": "https://raw.githubusercontent.com/dargon682/focus-upscale-camera/main/apk/photo-tool-v0.8.00-BETA.apk",
+  "sha256": "PENDING",
+  "changelog": "升级下载全面优化：断点续传、多线程分片、完整性+签名校验、指数退避重试、后台/通知栏下载、错误码诊断、Beta/稳定双通道、进度UI优化、更新后清理旧包。"
 }
