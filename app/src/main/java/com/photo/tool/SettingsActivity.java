@@ -7,6 +7,7 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.Toast;
 
@@ -45,6 +46,8 @@ public class SettingsActivity extends Activity {
                 Prefs.gridStyle(this), v -> Prefs.putGridStyle(this, v.intValue()));
         setupSpinner(R.id.spMirror, R.array.mirror_entries, R.array.mirror_values,
                 Prefs.downloadMirror(this), v -> Prefs.putDownloadMirror(this, v.intValue()));
+
+        buildFilterPlugins();
 
         Button btnTestSpeed = findViewById(R.id.btnTestSpeed);
         btnTestSpeed.setOnClickListener(v -> testSpeed());
@@ -111,6 +114,20 @@ public class SettingsActivity extends Activity {
                     .setPositiveButton(android.R.string.ok, null)
                     .show();
         });
+    }
+
+    private void buildFilterPlugins() {
+        LinearLayout container = findViewById(R.id.filterPlugins);
+        for (FilterPlugin p : FilterPluginRegistry.all()) {
+            if (p.isNone()) continue;                // 无滤镜不可关闭
+            SettingRow row = new SettingRow(this, null);
+            row.setLabel(p.name())
+                    .setChecked(Prefs.pluginOn(this, p.id()))
+                    .setOnToggled((b, on) -> Prefs.putPluginOn(this, p.id(), on));
+            container.addView(row,
+                    new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
+                            LinearLayout.LayoutParams.WRAP_CONTENT));
+        }
     }
 
     /** 用 entries + values 填充 Spinner，并让初值命中当前设置。 */

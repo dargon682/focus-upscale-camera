@@ -8,9 +8,13 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
+import android.os.Looper;
 import android.provider.MediaStore;
 import android.view.View;
+import android.view.Gravity;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -19,6 +23,9 @@ import androidx.annotation.NonNull;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /** 结果展示页：显示合成结果并支持与原图对比、缩放查看、保存到相册。 */
 public class ResultActivity extends Activity {
@@ -28,8 +35,15 @@ public class ResultActivity extends Activity {
     private TextView tvCompareHint;
     private Button btnSave, btnBack, btnCompare, btnViewSuper, btnViewOrig;
     private Bitmap image;
+    private Bitmap baseSuper;
+    private Bitmap origBitmap;
     private String title = "";
     private boolean pendingSave = false;
+
+    /** 滤镜处理：单线程串行执行，避免并发写位图。 */
+    private final ExecutorService filterExec = Executors.newSingleThreadExecutor();
+    private final Handler main = new Handler(Looper.getMainLooper());
+    private volatile boolean applyingFilter = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,8 +67,10 @@ public class ResultActivity extends Activity {
         String origPath = getIntent().getStringExtra("origPath");
         Bitmap origBmp = origPath != null ? BitmapFactory.decodeFile(origPath) : null;
 
-        // 主保存目标 = 超分结果
+        // 主保存目标 = 超分结果；baseSuper 为未加滤镜的原始超分，供滤镜切换时重建
+        baseSuper = superBmp;
         image = superBmp;
+        origBitmap = origBmp;
         compareView.setBitmaps(superBmp, origBmp);
 
         // 默认进入对比模式（若设置了对比开关且有原图），否则仅显超分
@@ -75,6 +91,97 @@ public class ResultActivity extends Activity {
 
         btnSave.setOnClickListener(v -> trySave());
         btnBack.setOnClickListener(v -> finish());
+
+        buildFilterBar();
+    }
+
+    /** 构建滤镜插件选择条；进入时按已保存的当前滤镜应用一次。 */
+    private void buildFilterBar() {
+        LinearLayout bar = findViewById(R.id.filterBar);
+        List<FilterPlugin> list = FilterPluginRegistry.enabled(this);
+        if (list.isEmpty()) return;
+
+        String cur = Prefs.currentFilter(this);
+        for (FilterPlugin f : list) {
+            final String fId = f.id();
+            TextView chip = new TextView(this);
+            chip.setText(f.name());
+            chip.setTextSize(12);
+            chip.setPadding(dp(14), dp(7), dp(14), dp(7));
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+            lp.rightMargin = dp(6);
+            chip.setLayoutParams(lp);
+            chip.setGravity(Gravity.CENTER);
+            chip.setTag(fId);
+            styleChip(chip, fId.equals(cur));
+            chip.setOnClickListener(v -> {
+                if (applyingFilter) return;
+                Prefs.putCurrentFilter(this, fId);
+                applyFilter(fId);
+                refreshChips(fId);
+            });
+            bar.addView(chip);
+        }
+
+        // 启动时应用已保存的当前滤镜（若仍被启用）
+        FilterPlugin saved = FilterPluginRegistry.byId(cur);
+        if (saved != null && (saved.isNone() || Prefs.pluginOn(this, saved.id()))) {
+            if (!saved.isNone()) applyFilter(saved.id());
+            return;
+        }
+        // 已保存的滤镜被关闭 → 回退无滤镜
+        Prefs.putCurrentFilter(this, FilterPlugin.ID_NONE);
+        refreshChips(FilterPlugin.ID_NONE);
+    }
+
+    private void refreshChips(String selectedId) {
+        LinearLayout bar = findViewById(R.id.filterBar);
+        for (int i = 0; i < bar.getChildCount(); i++) {
+            TextView chip = (TextView) bar.getChildAt(i);
+            styleChip(chip, selectedId.equals(chip.getTag()));
+        }
+    }
+
+    private void styleChip(TextView chip, boolean selected) {
+        chip.setTextColor(selected ? getColor(R.color.text_on_accent) : getColor(R.color.text_primary));
+        chip.setBackgroundColor(selected ? getColor(R.color.accent) : getColor(R.color.bg_card));
+    }
+
+    /** 在后台线程对原始超分 baseSuper 应用滤镜，完成后替换当前 image 并刷新对比视图。 */
+    private void applyFilter(String id) {
+        FilterPlugin f = FilterPluginRegistry.byId(id);
+        if (f == null || applyingFilter) return;
+        applyingFilter = true;
+
+        filterExec.execute(() -> {
+            Bitmap next;
+            try {
+                next = f.apply(baseSuper);
+            } catch (Throwable t) {
+                next = baseSuper;
+            }
+            final Bitmap n = next;
+            main.post(() -> {
+                // 回收被替换的滤镜结果（无滤镜时 image 即 baseSuper，不回收）
+                if (image != null && image != baseSuper) image.recycle();
+                image = n;
+                compareView.setBitmaps(image != null ? image : baseSuper, origBitmap);
+                applyingFilter = false;
+            });
+        });
+    }
+
+    private int dp(float v) {
+        return Math.round(getResources().getDisplayMetrics().density * v);
+    }
+
+    @Override
+    protected void onDestroy() {
+        filterExec.shutdownNow();
+        if (image != null && image != baseSuper) image.recycle();
+        if (baseSuper != null) baseSuper.recycle();
+        super.onDestroy();
     }
 
     private void setMode(CompareView.Mode m) {

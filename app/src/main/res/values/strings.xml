@@ -97,6 +97,12 @@
     <string name="btn_view_orig">原图</string>
     <string name="hint_compare">左右拖动分隔线对比，双指放大</string>
 
+    <!-- 滤镜插件 -->
+    <string name="filter_title">滤镜插件</string>
+    <string name="filter_processing">处理中…</string>
+    <string name="section_filters">滤镜插件（强大可扩展）</string>
+    <string name="filter_plugin_desc">启用后可在结果页选择并应用该滤镜特效</string>
+
     <!-- 相机新设计 -->
     <string name="mode_photo">拍照</string>
     <string name="mode_super">超分</string>

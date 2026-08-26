@@ -31,6 +31,7 @@
 - **目标系统降至 Android 13（0.7.00）**：`targetSdk` 36→33（API 33），在保留全部功能的同时扩大低版本机型兼容范围。
 - **下载功能全面优化（0.8.00-BETA）**：断点续传、多线程分片、完整性+签名校验、指数退避重试、后台/通知栏下载、扩充五镜像源、进度显示速度与剩余时间、错误码诊断+一键重试、Beta/稳定双通道、更新后清理旧包。
 - **启动器性能优化（0.8.11）**：CameraX 实例在界面布局前预热并行初始化、全程复用单例，缩短相机就绪时间；最近缩略图位图解码移出主线程（独立后台 IO 线程池），消除冷启动/界面恢复时的主线程读盘卡顿；销毁时回收线程池。
+- **滤镜插件系统（0.8.30）**：内置可扩展的滤镜/特效插件体系，开箱含黑白、复古、冷色调、暖色调、柔和、鲜艳六款一键特效；结果页横向滤镜条可即时切换并对比、保存，设置页可独立启用/停用每款滤镜。插件基于 `FilterPlugin` 抽象 + `FilterPluginRegistry` 注册的轻量架构，第三方开发者按 `docs/PLUGIN.md` 四步即可接入自定义滤镜。
 
 ## 技术栈
 
@@ -49,20 +50,23 @@
 photo-tool
 ├── README.md                          # 项目说明
 ├── version.json                       # 在线更新清单（GitHub raw）
-├── apk/photo-tool-v0.8.11.apk         # 已签名的 0.8.11 安装包（v0.8.11）
+├── docs/PLUGIN.md                     # 滤镜插件标准接入文档（0.8.30）
+├── apk/photo-tool-v0.8.30.apk         # 已签名的 0.8.30 安装包（v0.8.30）
 └── app/src/main
     ├── AndroidManifest.xml              # 权限声明、Activity 注册
     ├── java/com/photo/tool
     │   ├── CameraActivity.java          # 相机预览、对焦、拍照、拍摄模式、变焦、连拍、超分流程、传感器水平仪
     │   ├── SuperResolution.java         # 多帧超分辨率合成算法（亚像素配准 / 流式处理 / 可调参数）
-    │   ├── Prefs.java                   # 设置持久化（含网格样式）+ 超分内存保护估算
+    │   ├── Prefs.java                   # 设置持久化（含网格样式、滤镜插件开关）+ 超分内存保护估算
     │   ├── UpdateChecker.java           # 线上检查更新（version.json + DownloadManager）
-    │   ├── SettingsActivity.java        # 设置页（分组卡片 + 功能开关 + 超分参数 + 画质档位 + 网格样式 + 检查更新）
+    │   ├── SettingsActivity.java        # 设置页（分组卡片 + 功能开关 + 超分参数 + 画质档位 + 网格样式 + 滤镜插件 + 检查更新）
     │   ├── SettingRow.java              # 设置行控件（标签 + 开关）
     │   ├── AidOverlayView.java          # 取景辅助覆盖层（九宫格 / 黄金分割 / 水平仪）
     │   ├── CompareView.java             # 原图/超分对比视图（分割线滑块 + 缩放平移）
     │   ├── GalleryActivity.java         # 历史相册页（网格缩略图 + 全图查看）
-    │   └── ResultActivity.java          # 结果展示、对比与保存相册
+    │   ├── FilterPlugin.java            # 滤镜插件抽象基类（id / name / apply，ARGB 工具）
+    │   ├── FilterPluginRegistry.java    # 滤镜插件注册表（内置滤镜登记、查询、启用过滤）
+    │   └── ResultActivity.java          # 结果展示、滤镜应用、对比与保存相册
     └── res
         ├── layout/activity_camera.xml   # 相机界面（预览 + 对焦框 + 图标工具栏 + 底部控制栏/快门/模式）
         ├── layout/activity_result.xml   # 结果比对与保存界面
@@ -108,6 +112,13 @@ photo-tool
 - 结果页以超分图为基准加载同帧采样原图，提供 **分割对比 / 仅超分 / 仅原图** 三种模式。
 - 对比模式拖拽中央手柄白线即可左右滑动对比；三种模式均支持双指缩放（1×~8×）与单指平移，便于观察细节差异。
 - 是否默认进入对比模式受设置中「原图 / 超分对比」开关控制；单张拍照则仅显示原图。
+
+### 滤镜插件系统（FilterPlugin / FilterPluginRegistry）
+
+- 滤镜抽象 `FilterPlugin`（`id` / `name` / `apply(Bitmap)`）描述一次像素级特效；注册表 `FilterPluginRegistry.buildBuiltins()` 集中登记内置滤镜，并依据 `Prefs.pluginOn` 过滤启用项。
+- 结果页进入时自动读取 `Prefs.currentFilter` 应用上次所选滤镜，点滤镜条任一 chip 即在后台单线程对原始超分 `baseSuper` 重建并替换当前图，支持与原图对比与保存。
+- 设置页「滤镜插件」卡片逐项开关每款滤镜（无滤镜恒开启）；关闭当前正用的滤镜后结果页自动回退「无滤镜」。
+- 完整接入规范见 [`docs/PLUGIN.md`](docs/PLUGIN.md)。
 
 ## 构建与打包
 

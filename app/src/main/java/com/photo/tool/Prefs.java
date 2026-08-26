@@ -39,6 +39,23 @@ public final class Prefs {
         return Math.max(0, Math.min(2, sp(c).getInt("grid_style", 1)));
     }
 
+    // ---- 滤镜插件 ----
+    /** 滤镜插件是否启用（默认内置滤镜启用）。 */
+    public static boolean pluginOn(Context c, String id) {
+        return sp(c).getBoolean("plugin_on_" + id, true);
+    }
+    public static void putPluginOn(Context c, String id, boolean v) {
+        sp(c).edit().putBoolean("plugin_on_" + id, v).apply();
+    }
+
+    /** 结果页当前选中的滤镜 id（默认无滤镜）。 */
+    public static String currentFilter(Context c) {
+        return sp(c).getString("current_filter", "none");
+    }
+    public static void putCurrentFilter(Context c, String id) {
+        sp(c).edit().putString("current_filter", id == null ? "none" : id).apply();
+    }
+
     // ---- 写入 ----
     public static void putGrid(Context c, boolean v)   { sp(c).edit().putBoolean("grid", v).apply(); }
     public static void putLevel(Context c, boolean v)  { sp(c).edit().putBoolean("level", v).apply(); }
