@@ -2,33 +2,64 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
 
-    <!-- 主强调：相机琥珀（机内读数 / 对焦框 / 选中态） -->
+    <!-- ═ 主强调：相机琥珀（机内读数 / 对焦框 / 选中态） ═ -->
     <color name="accent">#FFB020</color>
     <color name="accent_blue">#FFB020</color>
     <color name="accent_soft">#26FFB020</color>
 
-    <!-- 专业数码后背 深色机体色板 -->
+    <!-- 材质强调层级 -->
+    <color name="accent_hi">#FFC13D</color>
+    <color name="accent_pressed">#E89A1B</color>
+    <color name="accent_shadow">#8A5A00</color>
+    <color name="on_accent">#16181D</color>
+
+    <!-- ═ 专业数码后背 深色机体色板（分层 OCR 观感） ═ -->
     <color name="bg_deep">#0B0C0F</color>
     <color name="bg_card">#14161B</color>
+    <!-- Material 3 曲面层级：越高越亮，越接近取景器 -->
+    <color name="surface_s0">#0B0C0F</color>
+    <color name="surface_s1">#13151A</color>
+    <color name="surface_s2">#1A1D24</color>
+    <color name="surface_s3">#23262E</color>
+    <color name="surface_overlay_dark">#A6000000</color>
+    <color name="surface_overlay_light">#14FFFFFF</color>
+
     <color name="bg_toolbar">#171A20</color>
     <color name="toolbar_translucent">#E6171A20</color>
     <color name="control_bar_bg">#F2171A20</color>
+    <color name="control_bar_bg_t">#E60B0C0F</color>
+
+    <!-- 文本层级 -->
     <color name="text_primary">#F2F3F5</color>
     <color name="text_secondary">#8E939C</color>
+    <color name="text_tertiary">#5C6068</color>
     <color name="text_on_accent">#16181D</color>
-    <color name="divider">#24272E</color>
 
-    <!-- 机械快门 -->
+    <!-- 描边 / 分隔 -->
+    <color name="divider">#24272E</color>
+    <color name="divider_soft">#1E2127</color>
+    <color name="outline">#3A3E47</color>
+
+    <!-- ═ 机械快门 ═ -->
     <color name="shutter_ring">#E8EAED</color>
-    <color name="shutter_ring_hi">#4A4E57</color>
+    <color name="shutter_ring_hi">#555A64</color>
     <color name="shutter_inner">#1A1C21</color>
 
+    <!-- ═ 状态色 ═ -->
     <color name="danger">#FF5A5F</color>
+    <color name="danger_soft">#24FF5A5F</color>
     <color name="success">#34C77B</color>
+    <color name="success_soft">#2434C77B</color>
 
-    <!-- 取景网格：琥珀半透 -->
+    <!-- ═ 取景网格：琥珀半透 ═ -->
     <color name="overlay_grid">#59FFB020</color>
-    <!-- 相机顶部状态读数条背景 -->
+    <color name="overlay_grid_hi">#AAFFB020</color>
+    <!-- 机内提示条背景 -->
     <color name="hud_chip_bg">#CC0B0C0F</color>
     <color name="hud_amber">#FFB020</color>
+
+    <!-- ═ 按压波纹遮罩（材质 ink） ═ -->
+    <color name="ripple_on_surface">#1FFFFFFF</color>
+    <color name="ripple_on_deep">#33FFFFFF</color>
+    <color name="ripple_on_accent">#33000000</color>
 </resources>

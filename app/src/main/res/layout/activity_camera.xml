@@ -21,8 +21,8 @@
     <!-- 对焦方框指示（琥珀四角） -->
     <View
         android:id="@+id/focusBox"
-        android:layout_width="80dp"
-        android:layout_height="80dp"
+        android:layout_width="@dimen/focus_box_size"
+        android:layout_height="@dimen/focus_box_size"
         android:visibility="invisible"
         android:background="@drawable/bg_focus_box" />
 
@@ -172,7 +172,8 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
         android:orientation="vertical"
-        android:background="@color/control_bar_bg">
+        android:background="@drawable/bg_control_bar"
+        android:paddingBottom="@dimen/spacing_m">
 
         <!-- 顶端琥珀细线：机体接缝 -->
         <View
@@ -289,8 +290,8 @@
     <!-- 左下角最近缩略角标（琥珀描边） -->
     <FrameLayout
         android:id="@+id/imgRecent"
-        android:layout_width="44dp"
-        android:layout_height="44dp"
+        android:layout_width="@dimen/recent_thumb_size"
+        android:layout_height="@dimen/recent_thumb_size"
         android:layout_gravity="bottom|start"
         android:layout_margin="@dimen/spacing_l"
         android:clickable="true"

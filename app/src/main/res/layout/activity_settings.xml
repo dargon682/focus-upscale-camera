@@ -264,12 +264,13 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/spacing_m"
-                android:background="@drawable/bg_capsule"
-                android:minHeight="48dp"
+                android:background="@drawable/bg_primary_button"
+                android:minHeight="@dimen/primary_btn_height"
                 android:paddingStart="@dimen/spacing_m"
                 android:paddingEnd="@dimen/spacing_m"
                 android:text="@string/btn_check_update"
-                android:textColor="@color/text_primary" />
+                android:textColor="@color/text_on_accent"
+                android:textStyle="bold" />
 
             <Button
                 android:id="@+id/btnBack"

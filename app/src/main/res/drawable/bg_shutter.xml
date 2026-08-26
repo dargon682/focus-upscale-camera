@@ -1,6 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 现代机械快门：滚花金属外圈 + 凸起顶帽（受光面亮、底部暗，营造凸起手感） -->
+<!-- 现代机械快门：滚花金属外圈 + 凸起顶帽（受光面亮、底部暗）+ 外缘投影 -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 外缘投影（快门浮于机体之上） -->
+    <item
+        android:top="3dp"
+        android:left="3dp"
+        android:right="3dp"
+        android:bottom="-3dp">
+        <shape android:shape="oval">
+            <gradient
+                android:angle="90"
+                android:startColor="@color/accent_shadow"
+                android:endColor="#00000000"
+                android:centerColor="#55000000"
+                android:type="linear" />
+        </shape>
+    </item>
     <!-- 外圈滚花（分段虚线 ≡ 机加工痕迹） -->
     <item>
         <shape android:shape="oval">
@@ -11,10 +26,15 @@
                 android:dashGap="4.5dp" />
         </shape>
     </item>
-    <!-- 外环实心基座 -->
+    <!-- 外环实心基座（受光上亮下暗） -->
     <item>
         <shape android:shape="oval">
-            <solid android:color="#3A3E47" />
+            <gradient
+                android:angle="90"
+                android:startColor="#4A4E57"
+                android:centerColor="#3A3E47"
+                android:endColor="#26282F"
+                android:type="linear" />
         </shape>
     </item>
     <!-- 中央黑色快门洞 -->
@@ -28,8 +48,8 @@
         <shape android:shape="oval">
             <gradient
                 android:angle="90"
-                android:startColor="#9FA4AE"
-                android:centerColor="#555A64"
+                android:startColor="#A6ABB4"
+                android:centerColor="#5A5F69"
                 android:endColor="#24262C"
                 android:type="linear" />
         </shape>
@@ -43,6 +63,14 @@
                 android:centerColor="#6A6F79"
                 android:endColor="#2E3138"
                 android:type="linear" />
+        </shape>
+    </item>
+    <!-- 琥珀取景环（对焦/拍摄感） -->
+    <item android:top="15dp" android:bottom="15dp" android:left="15dp" android:right="15dp">
+        <shape android:shape="oval">
+            <stroke
+                android:width="1dp"
+                android:color="@color/accent_soft" />
         </shape>
     </item>
 </layer-list>
