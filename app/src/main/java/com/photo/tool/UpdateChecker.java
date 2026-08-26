@@ -58,7 +58,7 @@ public final class UpdateChecker {
 
     /** 测速基准文件（仓库内 APK raw 地址，较大以便稳定测得各源真实带宽）。 */
     private static final String SPEED_BASE =
-            "https://raw.githubusercontent.com/dargon682/focus-upscale-camera/main/apk/photo-tool-v0.5.200.apk";
+            "https://raw.githubusercontent.com/dargon682/focus-upscale-camera/main/apk/photo-tool-v0.6.200.apk";
 
     /** 测速读取量：每源读取 1MB 计时。 */
     private static final int SPEED_READ_BYTES = 1_048_576;
@@ -289,14 +289,14 @@ public final class UpdateChecker {
         }
     }
 
-    /** 后台下载并实时回调进度。 */
+    /** 后台下载并实时回调进度；单个源失败自动切换至下一可用源直至成功或全部失败。 */
     private static void downloadRun(final Activity act, final String baseUrl,
                                     final File target, final Spinner spinner,
                                     final ProgressBar bar, final TextView tvPct,
                                     final AlertDialog dialog) {
         currentCancel.set(false);
-        final int mirrorIdx = spinner.getSelectedItemPosition();
-        final String urlStr = MIRROR_PREFIXES[mirrorIdx] + baseUrl;
+        final int sel = Math.max(0, Math.min(MIRROR_PREFIXES.length - 1, spinner.getSelectedItemPosition()));
+        final int[] order = buildMirrorOrder(sel);
 
         main.post(() -> {
             spinner.setEnabled(false);
@@ -305,15 +305,72 @@ public final class UpdateChecker {
             tvPct.setText(R.string.upd_connecting);
         });
 
+        Throwable last = null;
+        for (int idx : order) {
+            if (currentCancel.get()) {
+                main.post(() -> {
+                    if (dialog.isShowing()) dialog.dismiss();
+                    Toast.makeText(act, R.string.upd_cancelled, Toast.LENGTH_SHORT).show();
+                });
+                return;
+            }
+            final String urlStr = MIRROR_PREFIXES[idx] + baseUrl;
+            try {
+                doDownload(urlStr, target, bar, tvPct);
+                final File downloaded = target;
+                main.post(() -> {
+                    if (dialog.isShowing()) dialog.dismiss();
+                    installApk(act, downloaded);
+                });
+                return;
+            } catch (InterruptedDownload e) {
+                main.post(() -> {
+                    if (dialog.isShowing()) dialog.dismiss();
+                    Toast.makeText(act, R.string.upd_cancelled, Toast.LENGTH_SHORT).show();
+                });
+                return;
+            } catch (Throwable t) {
+                last = t;
+                final String miss = MIRROR_NAMES[idx];
+                final boolean hasNext = idx != order[order.length - 1];
+                main.post(() -> tvPct.setText(act.getString(
+                        hasNext ? R.string.upd_mirror_retry : R.string.upd_download_fail, miss)));
+            }
+        }
+
+        final Throwable f = last;
+        main.post(() -> {
+            if (dialog.isShowing()) dialog.dismiss();
+            Toast.makeText(act, act.getString(R.string.upd_download_fail)
+                    + " " + (f != null ? f.getMessage() : ""), Toast.LENGTH_LONG).show();
+        });
+    }
+
+    /** 生成镜像访问顺序：用户所选优先，其余按序跟随，用于失败自动回退。 */
+    private static int[] buildMirrorOrder(int sel) {
+        int n = MIRROR_PREFIXES.length;
+        int[] o = new int[n];
+        o[0] = sel;
+        int k = 1;
+        for (int i = 0; i < n; i++) if (i != sel) o[k++] = i;
+        return o;
+    }
+
+    /** 单源下载：成功正常返回，失败抛异常，用户取消抛 InterruptedDownload。 */
+    private static void doDownload(String urlStr, File target,
+                                   ProgressBar bar, TextView tvPct) throws Exception {
         HttpURLConnection conn = null;
         InputStream in = null;
         FileOutputStream out = null;
         try {
             conn = open(urlStr);
+            int code = conn.getResponseCode();
+            if (code != 200) {
+                throw new java.io.IOException("HTTP " + code);
+            }
             long len = conn.getContentLength();
             in = conn.getInputStream();
             out = new FileOutputStream(target);
-            // 已知总长则改用确定进度
             if (len > 0) main.post(() -> bar.setIndeterminate(false));
 
             final byte[] buf = new byte[8192];
@@ -324,7 +381,6 @@ public final class UpdateChecker {
                 if (currentCancel.get()) throw new InterruptedDownload();
                 out.write(buf, 0, r);
                 total += r;
-                // 节流刷新进度：至少间隔 120ms 更新一次，避免主线程频繁刷新
                 long now = System.currentTimeMillis();
                 if (now - lastUi >= 120) {
                     lastUi = now;
@@ -333,23 +389,6 @@ public final class UpdateChecker {
             }
             out.flush();
             updateProgress(bar, tvPct, len > 0, len, total);
-
-            final File downloaded = target;
-            main.post(() -> {
-                if (dialog.isShowing()) dialog.dismiss();
-                installApk(act, downloaded);
-            });
-        } catch (InterruptedDownload e) {
-            main.post(() -> {
-                if (dialog.isShowing()) dialog.dismiss();
-                Toast.makeText(act, R.string.upd_cancelled, Toast.LENGTH_SHORT).show();
-            });
-        } catch (Throwable t) {
-            main.post(() -> {
-                if (dialog.isShowing()) dialog.dismiss();
-                Toast.makeText(act, act.getString(R.string.upd_download_fail)
-                        + " " + t.getMessage(), Toast.LENGTH_LONG).show();
-            });
         } finally {
             try { if (in != null) in.close(); } catch (Exception ignored) { }
             try { if (out != null) out.close(); } catch (Exception ignored) { }

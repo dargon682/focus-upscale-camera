@@ -17,8 +17,8 @@ android {
         applicationId 'com.photo.tool'
         minSdkVersion 24
         targetSdkVersion 36
-        versionCode 9
-        versionName "0.6.100"
+        versionCode 10
+        versionName "0.6.200"
     }
 
     buildFeatures {

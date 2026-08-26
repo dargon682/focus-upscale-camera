@@ -67,6 +67,7 @@
     <string name="upd_connecting">正在连接…</string>
     <string name="upd_cancelled">下载已取消</string>
     <string name="upd_download_fail">下载失败</string>
+    <string name="upd_mirror_retry">%1$s 不可用，正在自动切换其他源…</string>
     <string name="upd_install_fail">无法打开安装包</string>
     <string name="lbl_mirror">下载镜像源</string>
     <string name="mirror_auto">自动（测速选取最快）</string>

@@ -1,6 +1,6 @@
 {
-  "versionCode": 9,
-  "versionName": "0.6.100",
-  "apkUrl": "https://github.com/dargon682/focus-upscale-camera/releases/download/BETA/app-release-BETA.apk",
-  "changelog": "统一 APK 签名为 Dargon（固定密钥库），确保相同签名 + 更高版本号即可覆盖安装，无需卸载旧版。"
+  "versionCode": 10,
+  "versionName": "0.6.200",
+  "apkUrl": "https://raw.githubusercontent.com/dargon682/focus-upscale-camera/main/apk/photo-tool-v0.6.200.apk",
+  "changelog": "修复下载失败问题：apkUrl 改用仓库内真实 APK 文件，并新增多镜像源自动回退——所选源不可用时自动依次切换至下一可用源直至下载成功。"
 }
