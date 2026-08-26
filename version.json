@@ -1,8 +1,8 @@
 {
-  "versionCode": 17,
-  "versionName": "0.8.10",
+  "versionCode": 18,
+  "versionName": "0.8.11",
   "channel": "beta",
-  "apkUrl": "https://raw.githubusercontent.com/dargon682/focus-upscale-camera/main/apk/photo-tool-v0.8.10.apk",
-  "sha256": "dd1733413cd967468b1b48b8a6c15c300a117a079bdf5e255f9d89a69716d271",
-  "changelog": "修复下载完成瞬间应用崩溃：为完成/安装路径增加兜底异常处理，后台受限无法自动拉起安装器时改为通知栏点击安装；前端0.8.10重设计同步保留。"
+  "apkUrl": "https://raw.githubusercontent.com/dargon682/focus-upscale-camera/main/apk/photo-tool-v0.8.11.apk",
+  "sha256": "7c2001bcd1f9d58076591476d8d6c4d994d1263182ad0f0ae68708730805f722",
+  "changelog": "启动器性能优化：CameraX 实例预热并行初始化、最近缩略图位图解码移出主线程，冷启动与界面恢复更流畅；前端0.8.10重设计与下载崩溃兜底同步保留。"
 }

@@ -75,6 +75,11 @@ public class CameraActivity extends Activity implements LifecycleOwner, SensorEv
     private TextView tvStatus;
     private View focusBox;
 
+    /** 后台 IO 单线程池：位图解码等耗主线程的操作移出主线程，避免冷启动/恢复卡顿。 */
+    private final ExecutorService backgroundIo = Executors.newSingleThreadExecutor();
+    /** CameraX 实例全程复用；在 onCreate 尽早预热，使相机初始化与界面布局并行。 */
+    private ListenableFuture<ProcessCameraProvider> cameraProviderFuture;
+
     /** 拍摄模式 0 拍照 / 1 超分 */
     private int mode = 0;
 
@@ -133,6 +138,10 @@ public class CameraActivity extends Activity implements LifecycleOwner, SensorEv
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_CREATE);
+        // 启动性能：立即预热 CameraX 单例，使其初始化与下面的界面布局并行，缩短相机就绪时间。
+        if (cameraProviderFuture == null) {
+            cameraProviderFuture = ProcessCameraProvider.getInstance(this);
+        }
         setContentView(R.layout.activity_camera);
         mainHandler = new Handler(Looper.getMainLooper());
 
@@ -258,7 +267,9 @@ public class CameraActivity extends Activity implements LifecycleOwner, SensorEv
     // ---------- 相机绑定 ----------
 
     private void startCamera() {
-        ListenableFuture<ProcessCameraProvider> future = ProcessCameraProvider.getInstance(this);
+        final ListenableFuture<ProcessCameraProvider> future = cameraProviderFuture != null
+                ? cameraProviderFuture
+                : (cameraProviderFuture = ProcessCameraProvider.getInstance(this));
         future.addListener(() -> {
             try {
                 ProcessCameraProvider provider = future.get();
@@ -800,9 +811,10 @@ public class CameraActivity extends Activity implements LifecycleOwner, SensorEv
             return;
         }
         final String fp = path;
-        mainExecutor().execute(() -> {
+        // 解码移后台线程，避免冷启动/恢复时主线程读盘卡顿
+        backgroundIo.execute(() -> {
             final Bitmap b = decodeSampled(fp, 160);
-            runOnUiThread(() -> {
+            mainHandler.post(() -> {
                 if (b != null) {
                     imgRecentThumb.setImageBitmap(b);
                     imgRecent.setVisibility(View.VISIBLE);
@@ -911,6 +923,7 @@ public class CameraActivity extends Activity implements LifecycleOwner, SensorEv
     @Override
     protected void onDestroy() {
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_DESTROY);
+        backgroundIo.shutdown();
         super.onDestroy();
     }
 }
