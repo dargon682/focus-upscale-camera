@@ -5,9 +5,12 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
+import android.provider.Settings;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.ArrayAdapter;
@@ -415,18 +418,52 @@ public final class UpdateChecker {
         }
     }
 
-    /** 通过 FileProvider 引导安装 APK。 */
+    /** 通过 FileProvider 引导安装 APK：优先检测“安装未知来源”授权，未授权自动引导开启。 */
     private static void installApk(Activity act, File apk) {
         try {
             Uri uri = FileProvider.getUriForFile(act, act.getPackageName() + ".fileprovider", apk);
-            Intent intent = new Intent(Intent.ACTION_VIEW);
-            intent.setDataAndType(uri, "application/vnd.android.package-archive");
-            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            act.startActivity(intent);
+
+            // Android 8+（API 26）：需要“安装未知应用”授权，否则打开安装器会失败
+            if (Build.VERSION.SDK_INT >= 26) {
+                PackageManager pm = act.getPackageManager();
+                if (!pm.canRequestPackageInstalls()) {
+                    Toast.makeText(act, R.string.upd_need_install_perm, Toast.LENGTH_LONG).show();
+                    guideToUnknownSources(act);
+                    return;
+                }
+            }
+
+            // 优先用 ACTION_INSTALL_PACKAGE 打开系统安装器
+            try {
+                Intent install = new Intent(Intent.ACTION_INSTALL_PACKAGE);
+                install.setData(uri);
+                install.putExtra(Intent.EXTRA_NOT_UNKNOWN_SOURCE, true);
+                install.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                install.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                act.startActivity(install);
+            } catch (Exception e) {
+                // 回退到 ACTION_VIEW
+                Intent view = new Intent(Intent.ACTION_VIEW);
+                view.setDataAndType(uri, "application/vnd.android.package-archive");
+                view.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                view.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                act.startActivity(view);
+            }
         } catch (Exception e) {
             e.printStackTrace();
             Toast.makeText(act, R.string.upd_install_fail, Toast.LENGTH_LONG).show();
+        }
+    }
+
+    /** 跳转引导页开启“安装未知应用”授权。 */
+    private static void guideToUnknownSources(Activity act) {
+        try {
+            Intent s = new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES);
+            s.setData(Uri.parse("package:" + act.getPackageName()));
+            act.startActivity(s);
+        } catch (Exception e) {
+            act.startActivity(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                    Uri.parse("package:" + act.getPackageName())));
         }
     }
 

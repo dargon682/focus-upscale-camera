@@ -1,6 +1,6 @@
 {
-  "versionCode": 12,
-  "versionName": "0.6.31",
-  "apkUrl": "https://raw.githubusercontent.com/dargon682/focus-upscale-camera/main/apk/photo-tool-v0.6.31.apk",
-  "changelog": "测速标准更新：改用仓库独立 1MB 基准文件（benchmark/1mb.bin）作各镜像源测速样本，固定大小测速更稳定准确。"
+  "versionCode": 13,
+  "versionName": "0.6.32",
+  "apkUrl": "https://raw.githubusercontent.com/dargon682/focus-upscale-camera/main/apk/photo-tool-v0.6.32.apk",
+  "changelog": "修复升级时无法打开安装包：安装前检测“安装未知应用”授权，未授权自动引导开启；以 ACTION_INSTALL_PACKAGE 为主、ACTION_VIEW 回退，提高安装成功率。"
 }
