@@ -58,6 +58,16 @@
     <string name="btn_download">下载更新</string>
     <string name="section_quality">画质</string>
 
+    <!-- 应用内更新下载 -->
+    <string name="upd_download_title">下载更新</string>
+    <string name="upd_choose_mirror">选择下载镜像源（GitHub 直连过慢时可选用加速镜像）</string>
+    <string name="upd_cancel_download">取消下载</string>
+    <string name="upd_waiting">等待开始…</string>
+    <string name="upd_connecting">正在连接…</string>
+    <string name="upd_cancelled">下载已取消</string>
+    <string name="upd_download_fail">下载失败</string>
+    <string name="upd_install_fail">无法打开安装包</string>
+
     <!-- 相册页 -->
     <string name="gallery_title">历史相册</string>
     <string name="gallery_empty">暂无已保存的照片</string>

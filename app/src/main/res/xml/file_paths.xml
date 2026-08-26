@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- FileProvider 对外暴露路径：仅开放内部分发下载的安装包（files 目录） -->
+<paths>
+    <files-path name="downloads" path="files/" />
+</paths>
