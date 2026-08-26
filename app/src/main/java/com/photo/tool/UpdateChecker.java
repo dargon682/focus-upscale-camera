@@ -5,6 +5,8 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.ActivityNotFoundException;
+import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
@@ -17,6 +19,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
+import android.widget.ScrollView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -82,6 +85,10 @@ public final class UpdateChecker {
     private static final Handler main = new Handler(Looper.getMainLooper());
     private static volatile boolean hasChecked = false;
 
+    /** 速度估算：最近一次进度回调的时间戳与已下载字节（用于计算窗口内 Mbps）。 */
+    private static long lastProgMs = 0;
+    private static long lastProgTotal = 0;
+
     /** 每个镜像源失败后的最大重试次数（指数退避：1s、2s）。 */
     private static final int RETRY_TIMES = 2;
 
@@ -111,6 +118,13 @@ public final class UpdateChecker {
                     String name = o.optString("versionName", "");
                     String apk = o.optString("apkUrl", "");
                     String change = o.optString("changelog", "");
+                    // 双通道：channel=beta 且本机既非 BETA 包也未开启接收 Beta 时，跳过并不提示
+                    String channel = o.optString("channel", "");
+                    boolean isBetaInstalled = BuildConfig.VERSION_NAME.toUpperCase().contains("BETA");
+                    if ("beta".equalsIgnoreCase(channel) && !isBetaInstalled && !Prefs.allowBeta(ctx)) {
+                        main.post(() -> Toast.makeText(ctx, R.string.dn_channel_beta, Toast.LENGTH_SHORT).show());
+                        return;
+                    }
                     final boolean latest = remoteCode <= BuildConfig.VERSION_CODE;
                     main.post(() -> listener.onResult(name, change, apk, latest));
                     return;
@@ -206,6 +220,14 @@ public final class UpdateChecker {
         pctLp.topMargin = pad / 2;
         root.addView(tvPct, pctLp);
 
+        // 下载失败时显示的「重试」按钮（默认隐藏，点击重新构建下载对话框）
+        final Button retryBtn = new Button(act);
+        retryBtn.setText(R.string.btn_retry);
+        retryBtn.setVisibility(View.GONE);
+        LinearLayout.LayoutParams retryLp = lp(true);
+        retryLp.topMargin = pad / 2;
+        root.addView(retryBtn, retryLp);
+
         AlertDialog dialog = new AlertDialog.Builder(act)
                 .setTitle(R.string.upd_download_title)
                 .setView(root)
@@ -214,6 +236,12 @@ public final class UpdateChecker {
                 .setCancelable(false)
                 .create();
 
+        retryBtn.setOnClickListener(v -> {
+            if (dialog.isShowing()) dialog.dismiss();
+            currentCancel.set(false);
+            buildDownloadDialog(act, apkUrl, target, defSel);
+        });
+
         // 取消按钮文本在开始后改为“取消下载”
         dialog.setOnShowListener(d -> {
             Button neg = dialog.getButton(DialogInterface.BUTTON_NEGATIVE);
@@ -221,7 +249,7 @@ public final class UpdateChecker {
         });
 
         // —— 开始下载 ——
-        exec.execute(() -> downloadRun(act, apkUrl, target, spinner, bar, tvPct, dialog));
+        exec.execute(() -> downloadRun(act, apkUrl, target, spinner, bar, tvPct, retryBtn, dialog));
         dialog.show();
     }
 
@@ -314,8 +342,15 @@ public final class UpdateChecker {
     private static void downloadRun(final Activity act, final String baseUrl,
                                     final File target, final Spinner spinner,
                                     final ProgressBar bar, final TextView tvPct,
-                                    final AlertDialog dialog) {
+                                    final Button retryBtn, final AlertDialog dialog) {
         currentCancel.set(false);
+        lastProgMs = 0;
+        lastProgTotal = 0;
+        // 下载启动：清理上一轮残留分片/临时文件，并启动前台下载服务同步通知
+        cleanupStale(target);
+        act.startForegroundService(new Intent(act, DownloadService.class));
+        notifyProgress(0, -1);
+
         final int sel = Math.max(0, Math.min(MIRROR_PREFIXES.length - 1, spinner.getSelectedItemPosition()));
         final int[] order = buildMirrorOrder(sel);
 
@@ -329,6 +364,8 @@ public final class UpdateChecker {
         Throwable last = null;
         for (int idx : order) {
             if (currentCancel.get()) {
+                final DownloadService ds = DownloadService.running;
+                if (ds != null) ds.endNotify();
                 main.post(() -> {
                     if (dialog.isShowing()) dialog.dismiss();
                     Toast.makeText(act, R.string.upd_cancelled, Toast.LENGTH_SHORT).show();
@@ -356,14 +393,26 @@ public final class UpdateChecker {
                 if (!ok) continue;
 
                 Prefs.clearDownloadOffset(act);
+                final DownloadService dsRun = DownloadService.running;
+                if (dsRun != null) {
+                    dsRun.notifyText(0, act.getString(R.string.dn_verify));
+                }
+                main.post(() -> {
+                    bar.setIndeterminate(true);
+                    tvPct.setText(R.string.dn_verify);
+                });
                 verifyIntegrity(target, probeLength(urlStr));
                 final File downloaded = target;
                 main.post(() -> {
+                    final DownloadService dsDone = DownloadService.running;
+                    if (dsDone != null) dsDone.doneNotify();
                     if (dialog.isShowing()) dialog.dismiss();
                     installApk(act, downloaded);
                 });
                 return;
             } catch (InterruptedDownload e) {
+                final DownloadService ds2 = DownloadService.running;
+                if (ds2 != null) ds2.endNotify();
                 main.post(() -> {
                     if (dialog.isShowing()) dialog.dismiss();
                     Toast.makeText(act, R.string.upd_cancelled, Toast.LENGTH_SHORT).show();
@@ -376,10 +425,28 @@ public final class UpdateChecker {
 
         final Throwable f = last;
         main.post(() -> {
-            if (dialog.isShowing()) dialog.dismiss();
-            Toast.makeText(act, act.getString(R.string.upd_download_fail)
-                    + " " + (f != null ? f.getMessage() : ""), Toast.LENGTH_LONG).show();
+            // 失败：对话框内显示错误码诊断行，并给出「重试」按钮，可重新构建下载对话框
+            bar.setIndeterminate(false);
+            retryBtn.setVisibility(View.VISIBLE);
+            String extra = (f != null && f.getMessage() != null) ? "\n" + f.getMessage() : "";
+            tvPct.setText(act.getString(R.string.dn_err_code, "E1", errorText(act, 1)) + extra);
         });
+    }
+
+    /** 下载启动前清理上一轮残留的 .part* 分片与临时文件。 */
+    private static void cleanupStale(File target) {
+        for (int i = 0; i < PARALLEL_PARTS; i++) {
+            File pf = new File(target.getAbsolutePath() + ".part" + i);
+            if (pf.exists()) pf.delete();
+        }
+        File tmp = new File(target.getAbsolutePath() + ".tmp");
+        if (tmp.exists()) tmp.delete();
+    }
+
+    /** 将进度同步到通知栏前台服务（cur=已下载，total=-1 表示未知总大小）。 */
+    private static void notifyProgress(int cur, int total) {
+        DownloadService ds = DownloadService.running;
+        if (ds != null) ds.startForegroundNotify(cur, total);
     }
 
     /** 生成镜像访问顺序：用户所选优先，其余按序跟随，用于失败自动回退。 */
@@ -598,55 +665,182 @@ public final class UpdateChecker {
         }
     }
 
-    /** 更新进度条与百分比文本。 */
+    /** 更新进度条与百分比文本（含速度与剩余时间），并同步通知栏进度。 */
     private static void updateProgress(ProgressBar bar, TextView tvPct,
                                        boolean knowsLen, long len, long total) {
         if (knowsLen && len > 0) {
             int pct = (int) (total * 100 / len);
             bar.setProgress(pct);
-            // 以 MB 显示已下载 / 总大小
-            tvPct.setText(String.format(java.util.Locale.US, "%.1f / %.1f MB  (%d%%)",
-                    total / 1048576f, len / 1048576f, pct));
+
+            // 计算最近窗口内的下载速度（MB/s）与估计剩余时间
+            float mbps = 0;
+            long now = System.currentTimeMillis();
+            if (lastProgMs != 0) {
+                long dt = now - lastProgMs;
+                long db = total - lastProgTotal;
+                if (dt > 0 && db > 0) mbps = db / 1048576f / (dt / 1000f);
+            }
+            lastProgMs = now;
+            lastProgTotal = total;
+
+            String speedTxt = "";
+            if (mbps > 0 && len > total) {
+                long remainSec = (long) ((len - total) / 1048576f / mbps);
+                speedTxt = String.format(java.util.Locale.US, " | 速度 %.1fMB/s 剩余0m%ds", mbps, remainSec);
+            }
+            tvPct.setText(String.format(java.util.Locale.US, "%.1f/%.1fMB %d%%%s",
+                    total / 1048576f, len / 1048576f, pct, speedTxt));
+            notifyProgress((int) total, (int) len);
         } else {
             bar.setIndeterminate(true);
             tvPct.setText(String.format(java.util.Locale.US, "%.1f MB", total / 1048576f));
         }
     }
 
-    /** 通过 FileProvider 引导安装 APK：优先检测“安装未知来源”授权，未授权自动引导开启。 */
+    /**
+     * 通过 FileProvider 引导安装 APK：先做签名校验，再检测“安装未知来源”授权，
+     * 未授权自动引导开启；错误统一按错误码诊断（toast 用 dn_err_code，异常信息进可滚动诊断对话框）。
+     */
     private static void installApk(Activity act, File apk) {
+        // 签名校验：不一致时删除该 APK 并提示，不再进入安装
+        if (!signaturesMatch(act, apk)) {
+            apk.delete();
+            Toast.makeText(act, R.string.dn_sig_fail, Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        Uri uri;
         try {
-            Uri uri = FileProvider.getUriForFile(act, act.getPackageName() + ".fileprovider", apk);
+            uri = FileProvider.getUriForFile(act, act.getPackageName() + ".fileprovider", apk);
+        } catch (Exception e) {
+            toastError(act, 4);
+            showDiagnostic(act, e);
+            return;
+        }
 
-            // Android 8+（API 26）：需要“安装未知应用”授权，否则打开安装器会失败
-            if (Build.VERSION.SDK_INT >= 26) {
-                PackageManager pm = act.getPackageManager();
-                if (!pm.canRequestPackageInstalls()) {
-                    Toast.makeText(act, R.string.upd_need_install_perm, Toast.LENGTH_LONG).show();
-                    guideToUnknownSources(act);
-                    return;
-                }
+        // Android 8+（API 26）：需要“安装未知应用”授权，否则打开安装器会失败
+        if (Build.VERSION.SDK_INT >= 26) {
+            PackageManager pm = act.getPackageManager();
+            if (!pm.canRequestPackageInstalls()) {
+                toastError(act, 2);
+                guideToUnknownSources(act);
+                return;
             }
+        }
 
-            // 优先用 ACTION_INSTALL_PACKAGE 打开系统安装器
+        // 优先用 ACTION_INSTALL_PACKAGE 打开系统安装器
+        try {
+            Intent install = new Intent(Intent.ACTION_INSTALL_PACKAGE);
+            install.setData(uri);
+            install.putExtra(Intent.EXTRA_NOT_UNKNOWN_SOURCE, true);
+            install.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            install.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            act.startActivity(install);
+            // 安装器已接管，稍后删除本次下载的 APK 临时文件
+            scheduleDeleteApk(apk);
+            return;
+        } catch (ActivityNotFoundException e) {
+            // 回退到 ACTION_VIEW
             try {
-                Intent install = new Intent(Intent.ACTION_INSTALL_PACKAGE);
-                install.setData(uri);
-                install.putExtra(Intent.EXTRA_NOT_UNKNOWN_SOURCE, true);
-                install.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                install.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                act.startActivity(install);
-            } catch (Exception e) {
-                // 回退到 ACTION_VIEW
                 Intent view = new Intent(Intent.ACTION_VIEW);
                 view.setDataAndType(uri, "application/vnd.android.package-archive");
                 view.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
                 view.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 act.startActivity(view);
+                scheduleDeleteApk(apk);
+                return;
+            } catch (ActivityNotFoundException e2) {
+                toastError(act, 3);
+                showDiagnostic(act, e2);
+            } catch (Exception e2) {
+                toastError(act, classifyInstallErr(e2));
+                showDiagnostic(act, e2);
             }
         } catch (Exception e) {
-            e.printStackTrace();
-            Toast.makeText(act, R.string.upd_install_fail, Toast.LENGTH_LONG).show();
+            toastError(act, classifyInstallErr(e));
+            showDiagnostic(act, e);
+        }
+    }
+
+    /** 将安装抛出的一般异常归类为错误码：存储不足→5，其余→4。 */
+    private static int classifyInstallErr(Throwable e) {
+        String m = e.getMessage();
+        if (m != null && (m.contains("space") || m.contains("ENOSPC")
+                || m.contains("存储空间") || m.contains("no space"))) {
+            return 5;
+        }
+        return 4;
+    }
+
+    /** 安装完成后删除下载的 APK 临时文件（延迟以避开安装器读取）。 */
+    private static void scheduleDeleteApk(final File apk) {
+        main.postDelayed(apk::delete, 15000);
+    }
+
+    /** 错误码诊断文本映射：1 下载失败 / 2 安装权限 / 3 无安装器 / 4 安装包无效 / 5 存储不足 / 6 校验失败。 */
+    static String errorText(Activity act, int code) {
+        switch (code) {
+            case 1:
+                return act.getString(R.string.upd_download_fail);
+            case 2:
+                return act.getString(R.string.upd_need_install_perm);
+            case 3:
+                return act.getString(R.string.upd_install_no_activity);
+            case 4:
+                return act.getString(R.string.upd_install_invalid);
+            case 5:
+                return act.getString(R.string.upd_install_no_space);
+            case 6:
+                return act.getString(R.string.upd_install_bad_signature);
+            default:
+                return "";
+        }
+    }
+
+    /** 以统一格式弹出带错误码的诊断 Toast：错误码 Ex：<诊断文本>。 */
+    private static void toastError(Activity act, int code) {
+        Toast.makeText(act,
+                act.getString(R.string.dn_err_code, "E" + code, errorText(act, code)),
+                Toast.LENGTH_LONG).show();
+    }
+
+    /** 可滚动的安装错误详情对话框（展示异常 msg）。 */
+    private static void showDiagnostic(Activity act, Throwable e) {
+        String msg = e != null && e.getMessage() != null ? e.getMessage() : String.valueOf(e);
+        ScrollView sv = new ScrollView(act);
+        TextView tv = new TextView(act);
+        tv.setText(msg);
+        tv.setTextIsSelectable(true);
+        int pad = (int) (24 * act.getResources().getDisplayMetrics().density);
+        tv.setPadding(pad, pad, pad, pad);
+        sv.addView(tv);
+        new AlertDialog.Builder(act)
+                .setTitle(R.string.upd_install_fail)
+                .setView(sv)
+                .setPositiveButton(android.R.string.ok, null)
+                .show();
+    }
+
+    /**
+     * 签名一致性校验：用 PackageManager 比对待安装 APK 与当前已安装包的签名是否深度一致。
+     * 任一环节异常均返回 false（不可信，拒绝安装）。
+     */
+    static boolean signaturesMatch(Context ctx, File apk) {
+        try {
+            PackageManager pm = ctx.getPackageManager();
+            PackageInfo apkInfo = pm.getPackageArchiveInfo(apk.getAbsolutePath(), PackageManager.GET_SIGNATURES);
+            PackageInfo curInfo = pm.getPackageInfo(ctx.getPackageName(), PackageManager.GET_SIGNATURES);
+            if (apkInfo == null || curInfo == null
+                    || apkInfo.signatures == null || curInfo.signatures == null
+                    || apkInfo.signatures.length != curInfo.signatures.length) {
+                return false;
+            }
+            for (int i = 0; i < curInfo.signatures.length; i++) {
+                if (!curInfo.signatures[i].equals(apkInfo.signatures[i])) return false;
+            }
+            return true;
+        } catch (Throwable t) {
+            return false;
         }
     }
 

@@ -80,6 +80,7 @@
     <string name="mirror_ghproxy">gh-proxy.com 加速镜像</string>
     <string name="mirror_ghproxy_net">ghproxy.net 加速镜像</string>
     <string name="btn_test_speed">测试各源下载速度</string>
+    <string name="btn_retry">重试</string>
     <string name="speed_testing">正在测试各源下载速度…</string>
     <string name="speed_test_fail">测速失败，可能网络不通</string>
     <string name="speed_result_title">各镜像源下载速度</string>
@@ -118,4 +119,8 @@
     <string name="dn_checksum_fail">文件损坏（校验不符），请重新下载</string>
     <string name="dn_err_code">错误码 %1$s：%2$s</string>
     <string name="dn_channel_beta">检测到测试通道更新。</string>
+    <string name="upd_install_no_activity">未找到系统安装器</string>
+    <string name="upd_install_invalid">安装包无效，无法安装</string>
+    <string name="upd_install_no_space">存储空间不足，无法安装</string>
+    <string name="upd_install_bad_signature">校验失败（安装包损坏或签名不符）</string>
 </resources>

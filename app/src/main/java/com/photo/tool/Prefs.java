@@ -49,6 +49,13 @@ public final class Prefs {
     public static void putQuality(Context c, int v)    { sp(c).edit().putInt("quality", v).apply(); }
     public static void putGridStyle(Context c, int v)  { sp(c).edit().putInt("grid_style", v).apply(); }
 
+    // ---- 下载双通道 ----
+    /** 是否接收 Beta 测试通道更新（默认 false）。 */
+    public static boolean allowBeta(Context c) { return sp(c).getBoolean("allow_beta", false); }
+    public static void putAllowBeta(Context c, boolean v) {
+        sp(c).edit().putBoolean("allow_beta", v).apply();
+    }
+
     // ---- 下载镜像源 ----
     /** 下载镜像源：0 自动（测速选取最快） / 1 直连 / 2 gh-proxy / 3 ghproxy */
     public static int downloadMirror(Context c) {
