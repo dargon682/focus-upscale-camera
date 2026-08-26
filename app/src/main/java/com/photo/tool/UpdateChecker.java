@@ -27,14 +27,19 @@ import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * 检查更新 + 应用内下载：
@@ -51,12 +56,16 @@ public final class UpdateChecker {
     public static final String[] MIRROR_NAMES = {
             "GitHub 直连",
             "gh-proxy.com 加速镜像",
-            "ghproxy.net 加速镜像"
+            "ghproxy.net 加速镜像",
+            "GitHub 讯迅镜像",
+            "镜像站(mirror.ghproxy.com)"
     };
     public static final String[] MIRROR_PREFIXES = {
-            "",                       // 直连
-            "https://gh-proxy.com/",  // gh-proxy 加速
-            "https://ghproxy.net/"    // ghproxy 加速
+            "",                          // 直连
+            "https://gh-proxy.com/",     // gh-proxy 加速
+            "https://ghproxy.net/",      // ghproxy 加速
+            "https://gh.api.99988866.xyz/",   // GitHub 讯迅镜像
+            "https://mirror.ghproxy.com/"     // mirror.ghproxy 镜像
     };
 
     /** 测速基准文件（仓库内 1MB 随机样本，raw 地址；固定大小便于稳定测得各源真实带宽）。 */
@@ -72,6 +81,15 @@ public final class UpdateChecker {
     private static final ExecutorService exec = Executors.newFixedThreadPool(2);
     private static final Handler main = new Handler(Looper.getMainLooper());
     private static volatile boolean hasChecked = false;
+
+    /** 每个镜像源失败后的最大重试次数（指数退避：1s、2s）。 */
+    private static final int RETRY_TIMES = 2;
+
+    /** 多线程分片下载并发片数。 */
+    private static final int PARALLEL_PARTS = 4;
+
+    /** 多线程分片的最小文件长度阈值（字节）；过小或未知(Content-Length<=0)回退单线程。 */
+    private static final long PARALLEL_MIN_LEN = 24;
 
     private UpdateChecker() { }
 
@@ -318,8 +336,27 @@ public final class UpdateChecker {
                 return;
             }
             final String urlStr = MIRROR_PREFIXES[idx] + baseUrl;
+            // 每个源开始前读取断点续传偏移；失败指数退避重试2次(1s、2s)后再切换下一源
             try {
-                doDownload(urlStr, target, bar, tvPct);
+                boolean ok = false;
+                for (int retry = 0; retry <= RETRY_TIMES && !ok; retry++) {
+                    if (currentCancel.get()) throw new InterruptedDownload();
+                    try {
+                        doDownloadAny(urlStr, target, bar, tvPct, Prefs.downloadOffset(act));
+                        ok = true;
+                    } catch (Throwable t) {
+                        last = t;
+                        if (retry < RETRY_TIMES) {
+                            final String miss = MIRROR_NAMES[idx];
+                            main.post(() -> tvPct.setText(act.getString(R.string.upd_mirror_retry, miss)));
+                            Thread.sleep(1000L << retry); // 1s、2s
+                        }
+                    }
+                }
+                if (!ok) continue;
+
+                Prefs.clearDownloadOffset(act);
+                verifyIntegrity(target, probeLength(urlStr));
                 final File downloaded = target;
                 main.post(() -> {
                     if (dialog.isShowing()) dialog.dismiss();
@@ -334,10 +371,6 @@ public final class UpdateChecker {
                 return;
             } catch (Throwable t) {
                 last = t;
-                final String miss = MIRROR_NAMES[idx];
-                final boolean hasNext = idx != order[order.length - 1];
-                main.post(() -> tvPct.setText(act.getString(
-                        hasNext ? R.string.upd_mirror_retry : R.string.upd_download_fail, miss)));
             }
         }
 
@@ -359,25 +392,82 @@ public final class UpdateChecker {
         return o;
     }
 
-    /** 单源下载：成功正常返回，失败抛异常，用户取消抛 InterruptedDownload。 */
-    private static void doDownload(String urlStr, File target,
-                                   ProgressBar bar, TextView tvPct) throws Exception {
+    /**
+     * 统一下载入口：全新下载优先多线程分片，小文件/分片失败回退单线程；
+     * 已有偏移则走单线程断点续传。成功方可返回；失败抛异常，取消抛 InterruptedDownload。
+     */
+    private static void doDownloadAny(String urlStr, File target, ProgressBar bar, TextView tvPct,
+                                      long resumeFrom) throws Exception {
+        if (resumeFrom <= 0) {
+            long len = probeLength(urlStr);
+            if (len > PARALLEL_MIN_LEN) {
+                // 分片成功则直接返回；分片路径内部失败会抛出，由调用方重试/回退
+                downloadParallel(urlStr, target, len, bar, tvPct);
+                return;
+            }
+            // 大小不确定(-1)或过小：回退单线程从头下载
+        }
+        doDownload(urlStr, target, bar, tvPct, resumeFrom);
+    }
+
+    /** 探测远端 Content-Length（完整文件长度）；不可用返回 -1。 */
+    private static long probeLength(String urlStr) {
+        HttpURLConnection conn = null;
+        try {
+            conn = open(urlStr);
+            int code = conn.getResponseCode();
+            if (code == 200 || code == 206) return conn.getContentLength();
+            return -1L;
+        } catch (Throwable t) {
+            return -1L;
+        } finally {
+            if (conn != null) conn.disconnect();
+        }
+    }
+
+    /** 完整性校验：对比本地文件长度与远端 Content-Length；未知大小跳过。 */
+    private static void verifyIntegrity(File apk, long expectedLen) throws IOException {
+        if (expectedLen <= 0) return;
+        if (apk.length() != expectedLen) {
+            throw new IOException("size mismatch: " + apk.length() + " != " + expectedLen);
+        }
+    }
+
+    /**
+     * 单源下载（支持断点续传）：
+     * resumeFrom>0 时发起 Range，接受 206 追加写入、从 resumeFrom 累计进度；
+     * 服务端返回 200 则视为不支持续传，覆盖重下。成功正常返回，失败抛异常，
+     * 用户取消抛 InterruptedDownload。
+     */
+    private static void doDownload(String urlStr, File target, ProgressBar bar, TextView tvPct,
+                                   long resumeFrom) throws Exception {
         HttpURLConnection conn = null;
         InputStream in = null;
         FileOutputStream out = null;
         try {
             conn = open(urlStr);
+            if (resumeFrom > 0) conn.setRequestProperty("Range", "bytes=" + resumeFrom + "-");
             int code = conn.getResponseCode();
-            if (code != 200) {
-                throw new java.io.IOException("HTTP " + code);
+            long total;
+            boolean resumed;
+            if (resumeFrom > 0 && code == 206) {
+                // 服务器支持续传：追加写
+                out = new FileOutputStream(target, true);
+                total = resumeFrom;
+                resumed = true;
+            } else {
+                if (code != 200) throw new IOException("HTTP " + code);
+                // 200：覆盖重下
+                out = new FileOutputStream(target);
+                total = 0;
+                resumed = false;
             }
-            long len = conn.getContentLength();
+            long remainder = conn.getContentLength();
+            final long fullLen = resumed ? resumeFrom + remainder : remainder;
             in = conn.getInputStream();
-            out = new FileOutputStream(target);
-            if (len > 0) main.post(() -> bar.setIndeterminate(false));
+            if (remainder > 0) main.post(() -> bar.setIndeterminate(false));
 
             final byte[] buf = new byte[8192];
-            long total = 0;
             long lastUi = System.currentTimeMillis();
             int r;
             while ((r = in.read(buf)) != -1) {
@@ -387,19 +477,124 @@ public final class UpdateChecker {
                 long now = System.currentTimeMillis();
                 if (now - lastUi >= 120) {
                     lastUi = now;
-                    final long flen = len;
+                    final long flen = fullLen;
                     final long ftotal = total;
                     main.post(() -> updateProgress(bar, tvPct, flen > 0, flen, ftotal));
                 }
             }
             out.flush();
-            final long flen = len;
+            final long flen = fullLen;
             final long ftotal = total;
             main.post(() -> updateProgress(bar, tvPct, flen > 0, flen, ftotal));
         } finally {
             try { if (in != null) in.close(); } catch (Exception ignored) { }
             try { if (out != null) out.close(); } catch (Exception ignored) { }
             if (conn != null) conn.disconnect();
+        }
+    }
+
+    /**
+     * 多线程分片下载（Task3）：并发 4 片写入 target.part0..part3，完成后合并删除分片。
+     * 任一片失败抛异常（并清理分片）；文件过长到分片不值得/过小由调用方回退单线程。
+     */
+    public static void downloadParallel(String urlStr, File target, long fileLen) throws Exception {
+        downloadParallel(urlStr, target, fileLen, null, null);
+    }
+
+    /** 多线程分片下载的实现（可携带进度 UI）。任一片失败抛异常；取消抛 InterruptedDownload。 */
+    private static void downloadParallel(final String urlStr, final File target,
+                                         final long fileLen, final ProgressBar bar, final TextView tvPct)
+            throws Exception {
+        if (fileLen <= PARALLEL_MIN_LEN) {
+            throw new IOException("parallel size too small: " + fileLen);
+        }
+        final int parts = PARALLEL_PARTS;
+        final long per = fileLen / parts;
+        final AtomicLong done = new AtomicLong(0);
+        final AtomicReference<Throwable> fail = new AtomicReference<>();
+        final java.util.concurrent.CountDownLatch latch = new java.util.concurrent.CountDownLatch(parts);
+
+        for (int i = 0; i < parts; i++) {
+            final int idx = i;
+            final long start = i * per;
+            final long end = (i == parts - 1) ? fileLen - 1 : (i + 1) * per - 1;
+            final File partFile = new File(target.getAbsolutePath() + ".part" + idx);
+            new Thread(() -> {
+                HttpURLConnection conn = null;
+                InputStream in = null;
+                try {
+                    conn = open(urlStr);
+                    conn.setRequestProperty("Range", "bytes=" + start + "-" + end);
+                    int c = conn.getResponseCode();
+                    if (c != 206) throw new IOException("HTTP " + c);
+                    in = conn.getInputStream();
+                    FileOutputStream out = new FileOutputStream(partFile);
+                    byte[] buf = new byte[8192];
+                    int r;
+                    long wrote = 0;
+                    while ((r = in.read(buf)) != -1) {
+                        out.write(buf, 0, r);
+                        wrote += r;
+                        done.addAndGet(r);
+                        if (currentCancel.get()) throw new InterruptedDownload();
+                    }
+                    out.flush();
+                    out.close();
+                    if (wrote != (end - start + 1)) throw new IOException("part incomplete: " + idx);
+                } catch (Throwable t) {
+                    fail.compareAndSet(null, t);
+                } finally {
+                    try { if (in != null) in.close(); } catch (Exception ignored) { }
+                    if (conn != null) conn.disconnect();
+                }
+                latch.countDown();
+            }).start();
+        }
+
+        // 轮询累计进度反馈到 UI
+        long lastUi = System.currentTimeMillis();
+        try {
+            while (!latch.await(120, TimeUnit.MILLISECONDS)) {
+                long now = System.currentTimeMillis();
+                if (now - lastUi >= 120) {
+                    lastUi = now;
+                    if (bar != null) {
+                        final long d = done.get();
+                        main.post(() -> updateProgress(bar, tvPct, true, fileLen, d));
+                    }
+                }
+            }
+        } finally {
+            if (fail.get() == null && !currentCancel.get()) {
+                mergeParts(target, parts);
+            } else {
+                deleteParts(target, parts);
+                if (currentCancel.get()) throw new InterruptedDownload();
+                throw new IOException(fail.get());
+            }
+        }
+    }
+
+    /** 顺序合并 target.part0..N 到 target 后校验总大小。 */
+    private static void mergeParts(File target, int parts) throws IOException {
+        try (FileOutputStream out = new FileOutputStream(target)) {
+            byte[] buf = new byte[8192];
+            for (int i = 0; i < parts; i++) {
+                File pf = new File(target.getAbsolutePath() + ".part" + i);
+                try (InputStream in = new FileInputStream(pf)) {
+                    int r;
+                    while ((r = in.read(buf)) != -1) out.write(buf, 0, r);
+                }
+            }
+        }
+        deleteParts(target, parts);
+    }
+
+    /** 删除 target.part0..N 分片文件。 */
+    private static void deleteParts(File target, int parts) {
+        for (int i = 0; i < parts; i++) {
+            File pf = new File(target.getAbsolutePath() + ".part" + i);
+            if (pf.exists()) pf.delete();
         }
     }
 

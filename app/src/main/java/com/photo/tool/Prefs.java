@@ -59,6 +59,16 @@ public final class Prefs {
         sp(c).edit().putInt("mirror", val).apply();
     }
 
+    // ---- 下载断点续传 ----
+    /** 已下载的字节偏移（断点续传起点），0 表示无偏移从头下载。 */
+    public static long downloadOffset(Context c) { return sp(c).getLong("dl_offset", 0L); }
+    public static void putDownloadOffset(Context c, long v) {
+        sp(c).edit().putLong("dl_offset", Math.max(0L, v)).apply();
+    }
+    public static void clearDownloadOffset(Context c) {
+        sp(c).edit().remove("dl_offset").apply();
+    }
+
     /**
      * 超分内存保护：根据设备堆内存等级与目标超分倍数，计算安全的单帧采样宽度，
      * 使输出高分辨率网格的 float 工作缓冲不超过可承受范围，防止低端机 OOM。
