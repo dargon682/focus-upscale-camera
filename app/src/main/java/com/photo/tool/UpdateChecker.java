@@ -2,6 +2,9 @@ package com.photo.tool;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -24,6 +27,7 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.core.app.NotificationCompat;
 import androidx.core.content.FileProvider;
 
 import org.json.JSONObject;
@@ -404,10 +408,18 @@ public final class UpdateChecker {
                 verifyIntegrity(target, probeLength(urlStr));
                 final File downloaded = target;
                 main.post(() -> {
-                    final DownloadService dsDone = DownloadService.running;
-                    if (dsDone != null) dsDone.doneNotify();
-                    if (dialog.isShowing()) dialog.dismiss();
-                    installApk(act, downloaded);
+                    try {
+                        final DownloadService dsDone = DownloadService.running;
+                        if (dsDone != null) dsDone.doneNotify();
+                        if (dialog != null && dialog.isShowing()) dialog.dismiss();
+                        installApk(act, downloaded);
+                    } catch (Throwable t) {
+                        // 完成后任何未捕获异常（如后台启动安装器被系统拒绝）都不允许崩溃，
+                        // 改为提示用户从通知栏手动点击安装。
+                        toastError(act, 2);
+                        showDiagnostic(act, t);
+                        safeNotifyTap(act, downloaded);
+                    }
                 });
                 return;
             } catch (InterruptedDownload e) {
@@ -775,6 +787,32 @@ public final class UpdateChecker {
     /** 安装完成后删除下载的 APK 临时文件（延迟以避开安装器读取）。 */
     private static void scheduleDeleteApk(final File apk) {
         main.postDelayed(apk::delete, 15000);
+    }
+
+    /**
+     * 兜底安装引导：当后台直接拉起系统安装器被系统限制（API 29+ BackgroundActivityStartNotAllowedException）
+     * 或其他异常致使自动安装失败时，发一条「点击安装」通知；用户在通知栏点击（此时已回前台）再走系统安装器。
+     */
+    private static void safeNotifyTap(Context ctx, File apk) {
+        try {
+            Uri uri = FileProvider.getUriForFile(ctx, ctx.getPackageName() + ".fileprovider", apk);
+            Intent install = new Intent(Intent.ACTION_INSTALL_PACKAGE)
+                    .setData(uri)
+                    .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
+            int flags = PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE;
+            PendingIntent pi = PendingIntent.getActivity(ctx, 3, install, flags);
+            NotificationManager nm = (NotificationManager) ctx.getSystemService(Context.NOTIFICATION_SERVICE);
+            Notification n = new NotificationCompat.Builder(ctx, DownloadService.CH_ID)
+                    .setSmallIcon(android.R.drawable.stat_sys_download_done)
+                    .setContentTitle(ctx.getString(R.string.dn_nc_done))
+                    .setContentText(ctx.getString(R.string.dn_tap_install))
+                    .setContentIntent(pi)
+                    .setAutoCancel(true)
+                    .build();
+            nm.notify(4, n);
+        } catch (Throwable ignored) {
+            // 兜底失败也无害：不影响进程，错误信息已通过 showDiagnostic 展示。
+        }
     }
 
     /** 错误码诊断文本映射：1 下载失败 / 2 安装权限 / 3 无安装器 / 4 安装包无效 / 5 存储不足 / 6 校验失败。 */

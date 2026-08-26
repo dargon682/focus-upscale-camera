@@ -112,6 +112,7 @@
     <string name="dn_mirror_more_1">GitHub 加速讯迅</string>
     <string name="dn_nc_title">正在下载更新</string>
     <string name="dn_nc_done">下载完成，点击安装</string>
+    <string name="dn_tap_install">点此安装新版</string>
     <string name="dn_perm_notif">请允许通知以显示下载进度</string>
     <string name="dn_verify">正在校验安装包完整性…</string>
     <string name="dn_sig_ok">签名校验通过</string>

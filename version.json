@@ -3,6 +3,6 @@
   "versionName": "0.8.10",
   "channel": "beta",
   "apkUrl": "https://raw.githubusercontent.com/dargon682/focus-upscale-camera/main/apk/photo-tool-v0.8.10.apk",
-  "sha256": "cd99044813c0c33bda2990162bf4bf4b0bc9547dc1c80a20864bd4ecd2190176",
-  "changelog": "前端全面重设计：引入分层曲面(M3)色板、按压波纹反馈、全新机械快门/面板卡/控制栏渐变，精修主界面HUD与设置页，视觉与交互双提升。"
+  "sha256": "dd1733413cd967468b1b48b8a6c15c300a117a079bdf5e255f9d89a69716d271",
+  "changelog": "修复下载完成瞬间应用崩溃：为完成/安装路径增加兜底异常处理，后台受限无法自动拉起安装器时改为通知栏点击安装；前端0.8.10重设计同步保留。"
 }
